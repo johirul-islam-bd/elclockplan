@@ -37,9 +37,35 @@ window.EWO_CONFIG = {
   EWO_FILE_PATTERN: "ELC_*LOCK_*PLAN",
   DELIVERY_FILE_PATTERN: "FABRIC_*DELIVERY",
 
-  /* Not used in this setup. */
+   /* Not used in this setup. */
   ONEDRIVE_SHARE_URL: "",
 
-  /* How often, in seconds, an open page checks whether the files changed. */
+  /* The OTT sheet in the fabric delivery workbook is the source of actual
+     dates, so the ERP report endpoint is not called and its token is not
+     published with this file. Fill this in only to fall back to the live
+     report when that sheet is missing. */
+  ERP_TNA_URL: "",
+  ERP_TIMEOUT_SECONDS: 300,
+
+  ERP_EVENT_ALIASES: {
+    "Yarn Allocation":                          "Yarn InHouse  Start",
+    "PP/TAG Sample fabric Delivery":            "PP/TAG Sample fabric Delivery",
+    "Labdip Approval":                          "Labdip Approval",
+    "Final Confirmation For Fabric Production": "Final Confirmation For Fabric Production",
+    "Fabric Delivery start":                    "Fabric Delivery start",
+    "Fabric Delivery complete":                 "Fabric Delivery complete",
+    "PP/TAG sample approve":                    "PP/TAG sample approve",
+    "PCD [Cutting Input]":                      "PCD [Cutting Input]",
+    "Sewing trims inhouse":                     "Sewing trims inhouse",
+    "Sewing Input":                             "Adjusted sew start",
+    "Sewing Complete":                          "Adjusted sew end",
+    "Gmt Receive From Wash [Start]":            "wash start",
+    "Gmt Receive From Wash [Complete]":         "wash end",
+    "Final inspection done":                    "RFI"
+  },
+
+  /* How often, in seconds, an open page checks whether the files changed.
+     The ERP calendar is re-read on the same beat. */
   POLL_SECONDS: 300
+
 };
