@@ -242,6 +242,59 @@
   .tabpage.on{display:block;}
   /* Any panel or card opens full screen on a click, and closes on the
      backdrop, the button, or Escape. */
+  /* ---- strip plan ---- */
+  .gantt{position:relative;overflow:auto;max-height:70vh;border:1px solid var(--line);background:#fff;}
+  /* width:max-content matters: a block inside a horizontally scrolling box is
+     only as wide as the visible area by default, so the header's green would
+     stop dead partway along the grid. */
+  .g-row{display:flex;align-items:stretch;min-height:26px;width:max-content;min-width:100%;
+         border-bottom:1px solid var(--line-soft);}
+  .g-row:last-child{border-bottom:0;}
+  .g-head{position:sticky;top:0;z-index:4;background:var(--green);color:#fff;font-size:10.5px;}
+  .g-tot{position:sticky;z-index:3;background:var(--paper);font-weight:600;}
+  .g-tot.fab{top:26px;}
+  .g-tot.sew{top:52px;}
+  .g-freeze{position:sticky;left:0;z-index:2;display:flex;flex:none;background:#fff;
+            border-right:2px solid var(--green);}
+  .g-rest{display:flex;flex:none;background:#fff;border-right:2px solid var(--line);}
+  .g-head .g-freeze, .g-head .g-rest{background:var(--green);}
+  .g-head .g-freeze{z-index:5;}
+  .g-tot .g-freeze, .g-tot .g-rest{background:var(--paper);}
+  .g-row:nth-child(even) .g-rest{background-color:#FCFBF8;}
+  .g-freeze .c, .g-rest .c{flex:none;padding:4px 7px;font-size:11px;white-space:nowrap;
+             overflow:hidden;text-overflow:ellipsis;border-right:1px solid var(--line-soft);}
+  .g-freeze .c.num, .g-rest .c.num{text-align:right;font-variant-numeric:tabular-nums;}
+  .g-track{position:relative;flex:none;}
+  .g-row:nth-child(even) .g-track{background-color:rgba(0,0,0,0.012);}
+  .g-day{position:absolute;top:0;bottom:0;border-right:1px solid var(--line-soft);
+         font-size:9.5px;color:var(--ink-soft);text-align:center;overflow:hidden;}
+  .g-head .g-day{color:#fff;border-right-color:rgba(255,255,255,0.25);padding-top:6px;}
+  .g-day.wknd{background:rgba(0,0,0,0.045);}
+  .g-day.mstart{border-left:1px solid var(--line);}
+  .g-val{position:absolute;top:0;bottom:0;font-size:9.5px;text-align:center;overflow:hidden;
+         padding-top:6px;font-variant-numeric:tabular-nums;}
+  /* How full the day is against the Capacity sheet. */
+  .g-val.over-yellow{background:#FFF0C2;}
+  .g-val.over-orange{background:#FFD9A8;}
+  .g-val.over-red{background:#F7BBA6;font-weight:700;}
+  .g-bar{position:absolute;height:11px;border-radius:2px;}
+  .g-bar.fab{top:3px;background:#4BA3D3;}
+  .g-bar.sew{top:14px;background:#10316B;}
+  .g-today{position:absolute;top:0;width:2px;background:var(--rust);z-index:1;pointer-events:none;}
+  .g-legend{display:flex;gap:18px;align-items:center;margin-top:10px;font-size:11px;color:var(--ink-soft);}
+  .g-legend .sw{display:inline-block;width:14px;height:9px;border-radius:2px;margin-right:6px;vertical-align:middle;}
+  .g-legend .sw.fab{background:#4BA3D3;}
+  .g-legend .sw.sew{background:#10316B;}
+  .g-legend .sw.today{background:var(--rust);width:3px;height:12px;}
+  .g-legend .sw.y{background:#FFF0C2;}
+  .g-legend .sw.o{background:#FFD9A8;}
+  .g-legend .sw.r{background:#F7BBA6;}
+  .pill{display:inline-block;padding:1px 7px;border-radius:9px;font-size:10.5px;white-space:nowrap;}
+  .pill.pass{background:var(--green-soft);color:var(--green);}
+  .pill.fail{background:#FBE4DC;color:#A33F14;}
+  .pill.overdue{background:#FBE4DC;color:#A33F14;font-weight:600;}
+  .pill.pending{background:var(--gold-soft);color:#8A6D1F;}
+  .pill.na{background:#F0EEE7;color:var(--ink-soft);}
   .zoomable{cursor:zoom-in;}
   .zoom-back{position:fixed;inset:0;background:rgba(26,26,26,0.55);z-index:2000;
              display:none;align-items:center;justify-content:center;padding:28px;}
@@ -300,7 +353,8 @@
   <button class="tab on" data-tab="overview">Overview</button>
   <button class="tab" data-tab="attention">Needs attention <span class="count" id="attnCount">0</span></button>
   <button class="tab" data-tab="timeline">Timeline</button>
-  <button class="tab" data-tab="capacity">Capacity</button>
+  <button class="tab" data-tab="capacity">Capacity with Load</button>
+  <button class="tab" data-tab="ott">OTT</button>
   <button class="tab" data-tab="delivery">Fabric delivery</button>
   <button class="tab" data-tab="summary">Summary</button>
   <button class="tab" data-tab="orders">Orders</button>
@@ -426,34 +480,47 @@
 
     <!-- ============ TIMELINE ============ -->
     <div class="tabpage" id="page-timeline">
-      <div class="granbar"><span class="granhint" id="granHint"></span></div>
-      <div class="grid3">
-        <div class="panel">
-          <h3 data-grantitle="Order quantity by PCD {g}">Order quantity by PCD month</h3>
-          <div class="hint">Cutting load ahead, from Adjusted PCD</div>
-          <div class="chart-box"><canvas id="pcdChart"></canvas></div>
+      <div class="granbar">
+        <span class="granlabel">Zoom</span>
+        <div class="seg" id="zoomSeg">
+          <button class="segbtn" id="zoomOut" title="Narrower days">&minus;</button>
+          <button class="segbtn" id="zoomIn" title="Wider days">+</button>
         </div>
-        <div class="panel">
-          <h3 data-grantitle="Fabric quantity by fabric start {g}">Fabric quantity by fabric start</h3>
-          <div class="hint">From Adjusted Fabric Start</div>
-          <div class="chart-box"><canvas id="fabMonthChart"></canvas></div>
-        </div>
-        <div class="panel">
-          <h3 data-grantitle="Sewing hours by sew start {g}">Sewing hours by sew start</h3>
-          <div class="hint">FR hour, from Adjusted sew start</div>
-          <div class="chart-box"><canvas id="sewMonthChart"></canvas></div>
-        </div>
+        <button class="secondary tiny" id="gotoToday">Today</button>
+        <span class="granlabel">Show days</span>
+        <select id="gFlag">
+          <option value="">All days</option>
+          <option value="any">Only 90%+ of capacity</option>
+          <option value="yellow">Only 90-100%</option>
+          <option value="orange">Only over capacity</option>
+          <option value="red">Only over 110%</option>
+        </select>
+        <span class="granlabel">Rows</span>
+        <select id="gRowsPer">
+          <option value="50">50</option>
+          <option value="100" selected>100</option>
+          <option value="250">250</option>
+        </select>
+        <button class="secondary tiny" id="gPrev">Previous</button>
+        <span id="gPageInfo"></span>
+        <button class="secondary tiny" id="gNext">Next</button>
+        <span class="granhint" id="granHint"></span>
       </div>
-      <div class="grid2">
-        <div class="panel">
-          <h3>Fabric flow by month</h3>
-          <div class="hint" id="fabricChartHint">Straight from the Fsum sheet, so filters do not change it</div>
-          <div class="chart-box"><canvas id="fabricChart"></canvas></div>
+      <div class="panel">
+        <h3>Strip plan</h3>
+        <div class="hint" id="ganttHint">
+          One row per order. The pale bar is the fabric window, the dark bar the sewing window.
+          The two totals rows add up every filtered order, not just the page on screen.
+          Roll the wheel over the grid to zoom; hold Shift and roll to scroll the rows.
         </div>
-        <div class="panel">
-          <h3>Sewing hours by month</h3>
-          <div class="hint" id="sewChartHint">Straight from the Ssum sheet, so filters do not change it</div>
-          <div class="chart-box"><canvas id="sewChart"></canvas></div>
+        <div class="gantt" id="ganttScroll"></div>
+        <div class="g-legend">
+          <span><i class="sw fab"></i>Fabric window, Fab Qty spread evenly</span>
+          <span><i class="sw sew"></i>Sewing window, Order Qty spread evenly</span>
+          <span><i class="sw today"></i>Today</span>
+          <span><i class="sw y"></i>90-100% of capacity</span>
+          <span><i class="sw o"></i>over capacity</span>
+          <span><i class="sw r"></i>more than 110%</span>
         </div>
       </div>
     </div>
@@ -479,12 +546,51 @@
       <div class="grid3" id="sewUnitGrid"></div>
     </div>
 
+    <!-- ============ OTT ============ -->
+    <div class="tabpage" id="page-ott">
+      <div class="kpis six" id="ottKpis"></div>
+      <div id="ottSourceNote" class="empty-note" style="display:none;"></div>
+      <div class="grid2">
+        <div class="panel">
+          <h3>Where each event stands</h3>
+          <div class="hint" id="ottMixHint">Every event line for the orders on screen, counted by what happened to it</div>
+          <div class="chart-box tall"><canvas id="ottMixChart"></canvas></div>
+        </div>
+        <div class="panel">
+          <h3>How late, when late</h3>
+          <div class="hint" id="ottLateHint">Days past plan on the events that were completed late</div>
+          <div class="chart-box tall"><canvas id="ottLateChart"></canvas></div>
+        </div>
+      </div>
+      <div class="granbar">
+        <span class="granlabel">Event</span>
+        <select id="ottEventFilter"><option value="">All events</option></select>
+        <span class="granlabel">Status</span>
+        <select id="ottStatusFilter">
+          <option value="">All</option>
+          <option value="Pass">Pass</option>
+          <option value="Fail">Fail</option>
+          <option value="Overdue">Overdue</option>
+          <option value="Pending">Pending</option>
+          <option value="N/A">N/A</option>
+        </select>
+        <span class="granhint" id="ottTableHint"></span>
+      </div>
+      <div class="panel">
+        <h3>Event by event</h3>
+        <div class="hint">Every order on screen against every event the ERP reports. Plan comes from the EWO sheet, Complete from the ERP.</div>
+        <div class="table-wrap"><table id="ottTable"></table></div>
+        <div class="pager">
+          <button class="secondary tiny" id="ottPrev">Previous</button>
+          <span id="ottPageInfo"></span>
+          <button class="secondary tiny" id="ottNext">Next</button>
+        </div>
+      </div>
+    </div>
+
     <!-- ============ DELIVERY ============ -->
     <div class="tabpage" id="page-delivery">
-      <div id="deliveryEmpty" class="empty-note" style="display:none;">
-        The fabric delivery workbook has not been published yet. Add the
-        <code>ONEDRIVE_SHARE_URL_2</code> secret and run the Action once.
-      </div>
+      <div id="deliveryEmpty" class="empty-note" style="display:none;"></div>
       <div id="deliveryBody">
         <div class="granbar">
           <span class="granlabel">Report as of</span>
@@ -495,15 +601,16 @@
         <div class="kpis ten" id="delKpis"></div>
 
         <!-- ---- the weekly KPI meeting layout, as the planning team sees it ---- -->
-        <h3 class="section-head">Weekly KPI meeting with textile cluster</h3>
+        <h3 class="section-head needs-plan">Weekly KPI meeting with textile cluster</h3>
+        <div id="noPlanNote" class="empty-note" style="display:none;"></div>
         <div class="section-hint">The same two blocks, trend, tables and gauge as the LockRepo sheet, rebuilt from the rows and answering to the filters</div>
         <div class="grid2">
-          <div class="panel">
+          <div class="panel needs-plan">
             <h3>Fabric delivery status</h3>
             <div class="hint">Against the month target</div>
             <div class="table-wrap"><table id="statusTable" class="report"></table></div>
           </div>
-          <div class="panel">
+          <div class="panel needs-plan">
             <h3>Fabric lock T&amp;A plan performance</h3>
             <div class="hint">Against the lock plan</div>
             <div class="table-wrap"><table id="lockTable" class="report"></table></div>
@@ -515,7 +622,7 @@
             <div class="hint">Delivery to lock-plan bookings due by the report date, against all fresh delivery</div>
             <div class="chart-box tall"><canvas id="trendChart"></canvas></div>
           </div>
-          <div class="panel">
+          <div class="panel needs-plan">
             <h3>Plan against actual, cumulative</h3>
             <div class="hint">Lock plan required by day, against fresh delivery to those orders</div>
             <div class="chart-box tall"><canvas id="cumChart"></canvas></div>
@@ -523,17 +630,17 @@
         </div>
 
         <div class="grid3">
-          <div class="panel">
+          <div class="panel needs-plan">
             <h3>Achieved</h3>
             <div class="hint">Till-date actual as a share of till-date planned</div>
             <div class="chart-box"><canvas id="achievedChart"></canvas></div>
           </div>
-          <div class="panel">
+          <div class="panel needs-plan">
             <h3 data-grantitle4="Fabric delivery plan per {g}">Fabric delivery plan per day</h3>
             <div class="hint">InHouse kg across the fabric window, locked orders against unlocked, as the fab sheet builds it</div>
             <div class="chart-box"><canvas id="planLockChart"></canvas></div>
           </div>
-          <div class="panel">
+          <div class="panel needs-plan">
             <h3 data-grantitle5="Fabric delivery actual per {g}">Fabric delivery actual per day</h3>
             <div class="hint">Fresh delivery kg, split by whether the order is locked</div>
             <div class="chart-box"><canvas id="actualLockChart"></canvas></div>
@@ -546,7 +653,7 @@
             <div class="hint">Fresh delivery, re-delivery and returns, from the Delivery sheet</div>
             <div class="chart-box tall"><canvas id="delDailyChart"></canvas></div>
           </div>
-          <div class="panel">
+          <div class="panel needs-plan">
             <h3>Plan against actual by unit</h3>
             <div class="hint">Required till the report date, against delivered, as the weekly KPI defines it</div>
             <div class="chart-box tall"><canvas id="unitPvaChart"></canvas></div>
@@ -554,7 +661,7 @@
         </div>
 
         <div class="grid3">
-          <div class="panel">
+          <div class="panel needs-plan">
             <h3>Plan against actual by buyer</h3>
             <div class="hint">Largest twelve by requirement</div>
             <div class="chart-box tall"><canvas id="buyerPvaChart"></canvas></div>
@@ -571,17 +678,17 @@
           </div>
         </div>
 
-        <div class="panel">
+        <div class="panel needs-plan">
           <h3>Weekly KPI, by buyer</h3>
           <div class="hint" id="kpiBuyerHint">Same columns and rules as the LockRepo sheet, so the totals match the published report</div>
           <div class="table-wrap short"><table id="kpiBuyerTable"></table></div>
         </div>
-        <div class="panel">
+        <div class="panel needs-plan">
           <h3>Weekly KPI, by garments unit</h3>
           <div class="hint">Same rules, grouped by unit</div>
           <div class="table-wrap short"><table id="kpiUnitTable"></table></div>
         </div>
-        <div class="panel">
+        <div class="panel needs-plan">
           <h3>Bookings behind plan</h3>
           <div class="hint" id="deficitHint">Largest shortfalls first. Click a heading to sort.</div>
           <div class="table-wrap short"><table id="deficitTable"></table></div>
@@ -676,7 +783,12 @@ var DELIVERY_FILE_PATH = cfg("DELIVERY_FILE_PATH", "");
 var EWO_FILE_PATTERN = cfg("EWO_FILE_PATTERN", "EWO.*Life.*Cycle");
 var DELIVERY_FILE_PATTERN = cfg("DELIVERY_FILE_PATTERN", "Fabric.*Delivery");
 var POLL_SECONDS = cfg("POLL_SECONDS", 300);
-var SHEET_MAIN = "EWO", SHEET_FABRIC = "Fsum", SHEET_SEW = "Ssum";
+/* The ERP's TNA calendar: one record per order per event, carrying the date it
+   was actually completed. Blank means the dashboard falls back to an OTT sheet
+   in the workbook, if there is one. */
+var ERP_TNA_URL = cfg("ERP_TNA_URL", "");
+var ERP_EVENT_ALIASES = cfg("ERP_EVENT_ALIASES", {});
+var ERP_TIMEOUT_SECONDS = cfg("ERP_TIMEOUT_SECONDS", 300);
 
 /* ============================================================
    Column names, old and new
@@ -781,10 +893,16 @@ var DEFAULT_TABLE_COLUMNS = ["EWO", "Status", "Buyer", "Team", "Execution Unit",
 
 var charts = {};
 var HEADERS = [], COLTYPE = {}, COLEMPTY = {}, IDX = {};
-var ROWS = [], FSUM = [], SSUM = [];
+var ROWS = [];
 var DELIV = [], DIDX = {}, LOCK = [], LIDX = {}, RFDROWS = [], LOCKMETA = {};
 var OTT = { events: [], pass: 0, fail: 0, checks: 0 };
 var HEADER_BY_KEY = {};
+/* Rows the ERP returned, the signature of that answer so an unchanged reply
+   costs nothing, and the per-order per-event lines the OTT tab draws. */
+var TNA = [], tnaSig = null, tnaError = null, tnaAt = null, OTTLINES = [], ottPage = 0;
+var DELIVERY_SHEETS = [];
+var tnaSource = null;                      // "sheet" or "erp"
+var cachedOttGrid = [], cachedOttSheet = null, cachedSheetNames = [];
 var asOf = null;
 var visibleCols = [], filtered = [], baseFiltered = [];
 var activeAlert = null, activeTab = "overview", granularity = "day";
@@ -801,12 +919,16 @@ var els = {};
  "signInBtn","signInBtn2","signOutBtn","accountLabel","signinBox","spinner","loadingTitle","loadingText",
  "errorBox","filterGrid","searchInput","dateFieldWrap","dateFrom","dateTo","resetBtn",
  "zoomBack","zoomClose","zoomTitle","zoomHint","zoomBody","liveWrap",
- "fabricChartHint","sewChartHint","fabLoadHint",
+ "fabLoadHint",
+ "ottKpis","ottSourceNote","ottEventFilter","ottStatusFilter","ottTableHint","ottTable",
+ "ottPrev","ottNext","ottPageInfo",
+ "ganttScroll","ganttHint","zoomIn","zoomOut","gotoToday","gRowsPer","gPrev","gNext","gPageInfo","gFlag",
+ "ottMixHint","ottLateHint",
  "granSwitch","granHint","sewUnitGrid","sewUnitHint","ottMissing","ottEventHint","ottTotalHint","sewLoadHint",
  "filterSummary","activeChips","kpiRow","alertRow","attnTable","attnTableTitle","attnTableHint",
  "pivotTable","dataTable","groupBy","colChooser","prevPage","nextPage","pageInfo","pageSize",
  "detailHint","tabBar","attnCount","capKpis","delKpis","asOfDate","asOfReset",
- "asOfHint","kpiBuyerTable","kpiUnitTable","deficitTable","deficitHint","deliveryEmpty",
+ "asOfHint","kpiBuyerTable","kpiUnitTable","deficitTable","deficitHint","deliveryEmpty","noPlanNote",
  "deliveryBody","kpiBuyerHint","statusTable","lockTable","trendChart","achievedChart"
 ].forEach(function(id){ els[id] = document.getElementById(id); });
 
@@ -844,11 +966,15 @@ function parseDate(v){
   if(!m) return null;
   return Date.UTC(+m[1], +m[2] - 1, +m[3]);
 }
+/* The one date format the dashboard uses, everywhere: 18-Jun-26. The only
+   exceptions are the From and To boxes, which are the browser's own date
+   pickers and follow the reader's Windows setting. */
 function fmtDate(ms){
   if(ms == null) return "";
   var d = new Date(ms);
-  return d.getUTCDate() + " " + MONTH_ABBR[d.getUTCMonth()] + " " + String(d.getUTCFullYear()).slice(2);
+  return pad2(d.getUTCDate()) + "-" + MONTH_ABBR[d.getUTCMonth()] + "-" + String(d.getUTCFullYear()).slice(2);
 }
+function pad2(n){ return (n < 10 ? "0" : "") + n; }
 function monthKey(ms){
   var d = new Date(ms);
   return d.getUTCFullYear() + "-" + String(d.getUTCMonth() + 1).padStart(2, "0");
@@ -1145,6 +1271,20 @@ function cellValue(v){
 }
 function normName(h){ return h == null ? "" : String(h).replace(/\s+/g, " ").trim().toLowerCase(); }
 function sheetRows(ws){ return XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: null, blankrows: false }); }
+/* Sheets get renamed. Rather than one exact name, each role has a list of
+   patterns tried in order, so Fab_Delivery, Fabric Delivery and Delivery all
+   answer to the same role. An exact name still wins over a pattern. */
+function sheetLike(wb, exact, patterns){
+  var hit = sheetByName(wb, exact);
+  if(hit) return hit;
+  for(var i = 0; i < patterns.length; i++){
+    for(var j = 0; j < wb.SheetNames.length; j++){
+      if(patterns[i].test(wb.SheetNames[j])) return wb.Sheets[wb.SheetNames[j]];
+    }
+  }
+  return null;
+}
+
 function sheetByName(wb, name){
   var key = wb.SheetNames.find(function(n){ return n.toLowerCase() === name.toLowerCase(); });
   return key ? wb.Sheets[key] : null;
@@ -1206,18 +1346,14 @@ function extractMain(ws){
   return result;
 }
 
-function extractMonthly(ws){
-  var out = [];
-  sheetRows(ws).forEach(function(r){
-    var a = cellValue(r[0]), b = cellValue(r[1]);
-    if(a == null && b == null) return;
-    out.push([a, b]);
-  });
-  return out;
-}
+/* Every column the Delivery sheet may carry. Any that is absent is simply
+   skipped, so one list serves the old layout and the new one. The header sits
+   under a strip of grand totals, which the reader below steps over. */
+var DELIVERY_COLUMNS = ["DeliveryDate", "ExportOrderNo", "BookingNo", "Buyer", "BuyerTeam",
+                        "DeliveryType", "BeneficieryUnit", "ExecutionUnit",
+                        "FabricConstruction", "FabricComposition", "FabricType",
+                        "DeliveryORReturnPlace", "UOM", "DeliveryQtyKg", "DeliveryQtyPcs"];
 
-var DELIVERY_COLUMNS = ["DeliveryDate", "ExportOrderNo", "BookingNo", "Buyer", "DeliveryType",
-                        "BeneficieryUnit", "ExecutionUnit", "FabricType", "DeliveryQtyKg"];
 function extractDelivery(ws){
   var rows = sheetRows(ws);
   var hi = rows.slice(0, 10).findIndex(function(r){
@@ -1299,13 +1435,11 @@ function bundleFromWorkbooks(ewoBuf, dlvBuf){
   // Only the sheets that are needed are parsed: the fab and Sew grids are huge
   // and the dashboard rebuilds them itself from the EWO rows.
   var wb = XLSX.read(new Uint8Array(ewoBuf), { type: "array", cellDates: true,
-    sheets: ["EWO", "Fsum", "Ssum", "OTT", "ActualEv", "Capacity"] });
+    sheets: ["EWO", "OTT", "ActualEv", "Capacity"] });
   var main = sheetByName(wb, "EWO");
   if(!main) throw new Error('The EWO workbook has no sheet named "EWO".');
   var bundle = {
     EWO: extractMain(main),
-    Fsum: sheetByName(wb, "Fsum") ? extractMonthly(sheetByName(wb, "Fsum")) : [],
-    Ssum: sheetByName(wb, "Ssum") ? extractMonthly(sheetByName(wb, "Ssum")) : [],
     ActualEv: (function(){
       var ott = sheetByName(wb, "OTT") || sheetByName(wb, "ActualEv");
       return ott ? extractGrid(ott) : [];
@@ -1319,12 +1453,23 @@ function bundleFromWorkbooks(ewoBuf, dlvBuf){
     Delivery: [], LockPlan: [], RFD: [], LockMeta: {}
   };
   if(dlvBuf){
-    var wb2 = XLSX.read(new Uint8Array(dlvBuf), { type: "array", cellDates: true, sheets: ["Delivery", "Locked Fabric", "RFD", "LockRepo"] });
-    var d = sheetByName(wb2, "Delivery"), l = sheetByName(wb2, "Locked Fabric"), r = sheetByName(wb2, "RFD"), m = sheetByName(wb2, "LockRepo");
+    var wb2 = XLSX.read(new Uint8Array(dlvBuf), { type: "array", cellDates: true,
+      /* No sheet list here: the names vary between copies of this workbook, so
+         it is opened whole and the sheets are picked out by pattern below. */
+      });
+    var d = sheetLike(wb2, "Delivery", [/^fab[_ ]?delivery$/i, /deliver/i]),
+        l = sheetLike(wb2, "Locked Fabric", [/lock.*fab/i, /fab.*lock/i]),
+        r = sheetLike(wb2, "RFD", [/^rfd/i]),
+        m = sheetLike(wb2, "LockRepo", [/lock.?repo/i, /repo/i]);
     bundle.Delivery = d ? extractDelivery(d) : [];
     bundle.LockPlan = l ? extractLockPlan(l) : [];
     bundle.RFD = r ? extractRfd(r) : [];
     bundle.LockMeta = m ? extractLockMeta(m) : {};
+    /* The ERP's TNA export, kept here as a sheet rather than pulled from the
+       report endpoint, which takes minutes to answer. */
+    var o = sheetByName(wb2, "OTT");
+    bundle.OttTna = o ? extractGrid(o, ["ewono"]) : [];
+    bundle.DeliverySheets = wb2.SheetNames.slice(0);
   }
   return bundle;
 }
@@ -1335,13 +1480,26 @@ function bundleFromWorkbooks(ewoBuf, dlvBuf){
    ============================================================ */
 var lastSignature = null, generatedAt = null, pollTimer = null, freshTimer = null, sourceLabel = "";
 var CACHE_KEY = "ewo-dashboard-cache-v1";
-/* Bump this whenever the dashboard starts reading a sheet, or a column, it did
-   not read before. The workbook can be untouched, so its eTag still matches
-   and the stored copy still looks current, while being the wrong SHAPE: parsed
-   by older code that never saw those sheets. Without this, a reader whose
-   browser holds a cached copy sees none of the new charts and no error either,
-   which is indistinguishable from the update not having been uploaded. */
-var CACHE_VERSION = 3;
+/* The stored copy is keyed by the workbook's eTag AND by the code that read
+   it. A workbook can sit untouched while the reading changes underneath: a
+   sheet renamed from Delivery to Fab_Delivery is found by the new code and not
+   by the old, yet the eTag is identical, so the stale parse would be served
+   for ever. Relying on someone to bump a number by hand failed twice, so the
+   number is computed from the source of the parsing itself: edit any of it and
+   every stored copy becomes invalid on the next load, automatically. */
+var CACHE_VERSION = 4;
+
+function parserFingerprint(){
+  var parts = [bundleFromWorkbooks, sheetLike, sheetByName, extractGrid, extractMain,
+               extractDelivery, extractLockPlan, extractRfd, extractLockMeta,
+               tnaFromSheet, buildCapacity, cellValue];
+  var t = String(CACHE_VERSION) + JSON.stringify(DELIVERY_COLUMNS);
+  for(var i = 0; i < parts.length; i++) t += parts[i].toString();
+  var h = 5381;
+  for(var c = 0; c < t.length; c++) h = ((h * 33) ^ t.charCodeAt(c)) >>> 0;
+  return "v" + CACHE_VERSION + "-" + h.toString(36);
+}
+var PARSER_FP = null;                      // worked out once, on first use
 var loadInFlight = false;
 
 /* Puts the dashboard back on screen. Every path that finishes a load has to
@@ -1358,12 +1516,16 @@ function readCache(){
     var raw = localStorage.getItem(CACHE_KEY);
     if(!raw) return null;
     var c = JSON.parse(raw);
-    if(!c || c.v !== CACHE_VERSION) return null;      // parsed by an older build
+    if(PARSER_FP == null) PARSER_FP = parserFingerprint();
+    if(!c || c.v !== PARSER_FP) return null;          // parsed by different code
     return c;
   }catch(e){ return null; }
 }
 function writeCache(sig, bundle){
-  try{ localStorage.setItem(CACHE_KEY, JSON.stringify({ v: CACHE_VERSION, sig: sig, at: new Date().toISOString(), bundle: bundle })); }
+  try{
+    if(PARSER_FP == null) PARSER_FP = parserFingerprint();
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ v: PARSER_FP, sig: sig, at: new Date().toISOString(), bundle: bundle }));
+  }
   catch(e){ /* quota exceeded on a small browser profile: fine, we just re-download next time */ }
 }
 
@@ -1402,11 +1564,15 @@ async function load(opts){
     var found = await locateWorkbooks(token);
     var sig = found.ewo.eTag + "|" + (found.delivery ? found.delivery.eTag : "-");
 
+    /* The ERP calendar moves on its own schedule, so it is checked every time,
+       not only when the workbook changes. A failure here is reported on the OTT
+       tab and nowhere else: the rest of the dashboard does not depend on it. */
     if(sig === lastSignature && ROWS.length){
       setStatus(opts.quiet ? "Up to date" : "Checked, the files have not changed", "live");
       showDashboard();
       clearError();
       paintFreshness();
+      if(await refreshTna(opts)) renderAll();   // same workbook, newer ERP answer
       return true;
     }
 
@@ -1435,6 +1601,9 @@ async function load(opts){
     var isUpdate = lastSignature !== null;
     lastSignature = sig;
     ingest(bundle);
+    /* After ingest, so the orders are known and the report can be cut down to
+       them as it is read. */
+    if(await refreshTna(opts)) renderAll();
     sourceLabel = found.ewo.name + (found.delivery ? " + " + found.delivery.name : "");
     showDashboard();
     clearError();
@@ -1499,8 +1668,6 @@ function ingest(bundle){
   });
 
   classifyColumns();
-  FSUM = bundle.Fsum || [];
-  SSUM = bundle.Ssum || [];
 
   function table(m){
     var hdr = (m && m.length) ? m[0].map(function(h){ return String(h == null ? "" : h).trim(); }) : [];
@@ -1513,9 +1680,26 @@ function ingest(bundle){
   RFDROWS = rt.rows;
   RFDROWS.idxKg = rt.idx["Kg"] != null ? rt.idx["Kg"] : 0;
   LOCKMETA = bundle.LockMeta || {};
-  OTT = buildOtt(bundle.ActualEv);
-  OTT.sheet = bundle.OttSheet || null;
-  OTT.sheetNames = bundle.SheetNames || [];
+  DELIVERY_SHEETS = bundle.DeliverySheets || [];
+  /* An OTT sheet in the delivery workbook is the source when it has rows. It
+     is current as of the file's own save time, and it spares everyone the wait
+     on the ERP report. */
+  var sheetTna = tnaFromSheet(bundle.OttTna);
+  if(sheetTna.length){
+    TNA = trimTna(sheetTna);
+    tnaSource = "sheet";
+    tnaSig = tnaSignature(TNA);
+    tnaError = null;
+    tnaAt = null;
+  }else if(tnaSource === "sheet"){
+    TNA = []; tnaSource = null; tnaSig = null;
+  }
+  cachedOttGrid = bundle.ActualEv || [];
+  cachedOttSheet = bundle.OttSheet || null;
+  cachedSheetNames = bundle.SheetNames || [];
+  OTT = buildOtt(cachedOttGrid);
+  OTT.sheet = cachedOttSheet;
+  OTT.sheetNames = cachedSheetNames;
   CAPACITY = buildCapacity(bundle.Capacity);
   buildDeliveredIndex();
   if(asOf == null){
@@ -1733,6 +1917,232 @@ function ottVerdict(v){
   return null;
 }
 
+/* ============================================================
+   The ERP's TNA calendar
+
+   One record per order per event: EWONo, EventDescription, EventDate,
+   CompleteDate, RevisionDate, ResponsibleDepertment. The dashboard reads it
+   straight from the report endpoint, so the actual dates are as current as the
+   ERP is, with no export step in between.
+   ============================================================ */
+async function fetchTna(){
+  if(!ERP_TNA_URL) return null;
+  var res = await fetchWithTimeout(ERP_TNA_URL, { headers: { "Accept": "application/json" } },
+                                   ERP_TIMEOUT_SECONDS * 1000, "The ERP report");
+  if(!res.ok){
+    var body = "";
+    try{
+      // An error page is usually HTML; only the words in it are worth showing.
+      body = (await res.text()).replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, 160);
+    }catch(e){}
+    throw new Error("The ERP report answered " + res.status + (body ? ". " + body : ""));
+  }
+  var data = await res.json();
+  if(!Array.isArray(data)) throw new Error("The ERP report did not return a list of records.");
+  return data;
+}
+
+/* The report is for the whole factory: around a quarter of a million records
+   covering every order and fifty odd events, most of which this dashboard has
+   no plan date for. Holding all of that as JavaScript objects would cost more
+   memory than the browser can spare, so it is cut down to the orders on the
+   EWO sheet and the events that have a plan column, and only the fields used,
+   the moment it arrives. The discarded names are remembered so the OTT tab can
+   say what it ignored. */
+var TNA_IGNORED_EVENTS = [];
+
+function trimTna(raw){
+  TNA_IGNORED_EVENTS = [];
+  if(!raw || !raw.length || !ROWS.length) return [];
+  var keep = {};
+  ROWS.forEach(function(r){ keep[String(num(r, "EWO"))] = true; });
+  var known = {}, ignored = {}, out = [];
+  for(var i = 0; i < raw.length; i++){
+    var rec = raw[i];
+    var ewo = String(rec.EWONo == null ? "" : rec.EWONo).trim();
+    if(!keep[ewo]) continue;
+    var ev = String(rec.EventDescription == null ? "" : rec.EventDescription).trim();
+    if(!ev) continue;
+    if(known[ev] === undefined){
+      known[ev] = planColumnForEvent(ev) != null;
+      if(!known[ev]) ignored[ev] = true;
+    }
+    if(!known[ev]) continue;
+    out.push({
+      EWONo: ewo, EventDescription: ev,
+      EventDate: rec.EventDate, CompleteDate: rec.CompleteDate, RevisionDate: rec.RevisionDate,
+      ResponsibleDepertment: rec.ResponsibleDepertment
+    });
+  }
+  TNA_IGNORED_EVENTS = Object.keys(ignored).sort();
+  return out;
+}
+
+/* The OTT sheet is the ERP report saved into the workbook, so it has the same
+   columns and is turned into the same records. Reading it costs nothing next
+   to asking the ERP for a hundred megabytes. */
+function tnaFromSheet(grid){
+  if(!grid || grid.length < 2) return [];
+  var header = (grid[0] || []).map(function(h){ return h == null ? "" : String(h).trim(); });
+  var at = {};
+  header.forEach(function(h, i){ if(h && at[colKey(h)] == null) at[colKey(h)] = i; });
+  function pick(row, names){
+    for(var i = 0; i < names.length; i++){
+      var c = at[colKey(names[i])];
+      if(c != null && row[c] != null && row[c] !== "") return row[c];
+    }
+    return null;
+  }
+  if(at["ewono"] == null && at["ewo"] == null) return [];
+  var out = [];
+  for(var r = 1; r < grid.length; r++){
+    var row = grid[r] || [];
+    var ewo = pick(row, ["EWONo", "EWO"]);
+    if(ewo == null || ewo === "") continue;
+    out.push({
+      EWONo: ewo,
+      EventDescription: pick(row, ["EventDescription", "Event"]),
+      EventDate: pick(row, ["EventDate"]),
+      CompleteDate: pick(row, ["CompleteDate"]),
+      RevisionDate: pick(row, ["RevisionDate"]),
+      ResponsibleDepertment: pick(row, ["ResponsibleDepertment", "ResponsibleDepartment", "Department"])
+    });
+  }
+  return out;
+}
+
+/* Enough of the answer to tell whether it changed, without keeping two copies
+   of it in memory to compare. */
+function tnaSignature(rows){
+  if(!rows) return "none";
+  var n = rows.length, acc = 0;
+  for(var i = 0; i < n; i++){
+    var r = rows[i];
+    var t = String(r.CompleteDate || "") + "|" + String(r.RevisionDate || "");
+    for(var c = 0; c < t.length; c++) acc = (acc * 31 + t.charCodeAt(c)) % 2147483647;
+  }
+  return n + ":" + acc;
+}
+
+/* Which EWO sheet column holds the plan date for an ERP event.
+
+   When config.js lists events in ERP_EVENT_ALIASES, that list decides both
+   which events are followed and what each one is measured against: the report
+   carries 53 event types per order and only a handful are the planning
+   department's milestones. With no list, names are paired automatically,
+   ignoring spacing, case and punctuation. */
+function erpEventWhitelisted(){
+  for(var k in ERP_EVENT_ALIASES) if(Object.prototype.hasOwnProperty.call(ERP_EVENT_ALIASES, k)) return true;
+  return false;
+}
+
+function planColumnForEvent(name){
+  var viaConfig = ERP_EVENT_ALIASES[name];
+  if(viaConfig == null && erpEventWhitelisted()){
+    // Be forgiving about how the name was typed into config.js.
+    var wantKey = eventKey(name);
+    for(var k in ERP_EVENT_ALIASES){
+      if(!Object.prototype.hasOwnProperty.call(ERP_EVENT_ALIASES, k)) continue;
+      if(eventKey(k) === wantKey){ viaConfig = ERP_EVENT_ALIASES[k]; break; }
+    }
+    if(viaConfig == null) return null;            // not on the list, not followed
+  }
+  if(viaConfig != null){
+    if(IDX[viaConfig] != null) return IDX[viaConfig];
+    var byKey = HEADER_BY_KEY[colKey(viaConfig)];  // the column name may be typed loosely too
+    return byKey == null ? null : byKey;
+  }
+  var at = HEADER_BY_KEY[eventKey(name)];
+  return at == null ? null : at;
+}
+
+/* Events are listed in the order config.js names them, which is the order the
+   work actually happens in. Anything not on the list sorts to the end. */
+function erpEventRank(name){
+  var i = 0, want = eventKey(name);
+  for(var k in ERP_EVENT_ALIASES){
+    if(!Object.prototype.hasOwnProperty.call(ERP_EVENT_ALIASES, k)) continue;
+    if(eventKey(k) === want) return i;
+    i++;
+  }
+  return 9999;
+}
+
+function ottStatus(plan, complete){
+  if(plan == null) return "N/A";
+  if(complete == null) return TODAY > plan ? "Overdue" : "Pending";
+  return complete <= plan ? "Pass" : "Fail";
+}
+
+/* One line per order per event, which is what the tab lists and what the
+   charts count. Only orders the EWO sheet knows are included, because without
+   a plan date there is nothing to judge against. */
+function buildOttLines(){
+  OTTLINES = [];
+  if(!TNA.length || !ROWS.length) return;
+  var byEwo = {};
+  ROWS.forEach(function(r){ byEwo[String(num(r, "EWO"))] = r; });
+  var planCol = {}, unknown = {};
+  TNA.forEach(function(rec){
+    var ewo = String(rec.EWONo == null ? "" : rec.EWONo).trim();
+    var order = byEwo[ewo];
+    if(!order) return;
+    var ev = String(rec.EventDescription == null ? "" : rec.EventDescription).trim();
+    if(!ev) return;
+    if(planCol[ev] === undefined){
+      planCol[ev] = planColumnForEvent(ev);
+      if(planCol[ev] == null) unknown[ev] = true;
+    }
+    var col = planCol[ev];
+    var plan = col == null ? null : dat(order, HEADERS[col]);
+    var complete = parseDate(rec.CompleteDate);
+    var revision = parseDate(rec.RevisionDate);
+    OTTLINES.push({
+      ewo: ewo, order: order, event: ev,
+      plan: plan, complete: complete, revision: revision,
+      dept: String(rec.ResponsibleDepertment == null ? "" : rec.ResponsibleDepertment).trim(),
+      status: ottStatus(plan, complete),
+      days: (plan != null && complete != null) ? Math.round((complete - plan) / DAY) : null,
+      mapped: col != null
+    });
+  });
+  // Events that survived the trim but still have no plan column.
+  OTTLINES.unknownEvents = Object.keys(unknown);
+  // Order by order, and within an order by where the event sits in the cycle.
+  OTTLINES.sort(function(a, b){
+    if(a.ewo !== b.ewo) return a.ewo < b.ewo ? -1 : 1;
+    var ra = erpEventRank(a.event), rb = erpEventRank(b.event);
+    if(ra !== rb) return ra - rb;
+    return a.event < b.event ? -1 : (a.event > b.event ? 1 : 0);
+  });
+}
+
+/* The same tally the two Overview charts want, taken from the lines. */
+function buildOttFromTna(){
+  if(!OTTLINES.length) return null;
+  var tally = {}, order = [], out = { events: [], pass: 0, fail: 0, checks: 0,
+    shape: "erp-tna", rows: TNA.length, headers: [], samples: [], matched: 0, unmatched: 0,
+    overdue: 0, pending: 0, na: 0 };
+  var seenEwo = {};
+  OTTLINES.forEach(function(l){
+    if(!seenEwo[l.ewo]){ seenEwo[l.ewo] = true; out.matched++; }
+    if(l.status === "Overdue") out.overdue++;
+    else if(l.status === "Pending") out.pending++;
+    else if(l.status === "N/A"){ out.na++; return; }
+    if(l.status !== "Pass" && l.status !== "Fail") return;
+    if(!tally[l.event]){ tally[l.event] = { pass: 0, fail: 0 }; order.push(l.event); }
+    tally[l.event][l.status === "Pass" ? "pass" : "fail"]++;
+    out[l.status === "Pass" ? "pass" : "fail"]++;
+    out.checks++;
+  });
+  out.events = order.map(function(name){
+    var t = tally[name], n = t.pass + t.fail;
+    return { name: name, pass: t.pass, fail: t.fail, total: n,
+             passPct: n ? Math.round(1000 * t.pass / n) / 10 : 0 };
+  });
+  return out.checks > 0 ? out : null;
+}
+
 /* The OTT sheet carries the ACTUAL date each milestone happened, pulled from
    the ERP. The EWO sheet carries the PLANNED date for the same milestones,
    under the same column names. Pass or fail is therefore not written down
@@ -1798,10 +2208,47 @@ function buildOttFromActuals(grid){
   return out.checks > 0 ? out : null;
 }
 
+/* Reads the ERP calendar when it is worth the wait: the first time, and on a
+   deliberate Refresh. Not on the quiet five minute check, because the report
+   runs to a hundred megabytes and takes minutes to arrive. Returns true when
+   the dashboard should be redrawn. */
+async function refreshTna(opts){
+  if(!ERP_TNA_URL) return false;
+  if(tnaSource === "sheet") return false;       // the workbook already has it
+  if(opts && opts.quiet && tnaSig) return false;
+  if(!(opts && opts.quiet)) setStatus("Reading the ERP calendar, this can take a minute...", "busy");
+  try{
+    var raw = await fetchTna();
+    var trimmed = trimTna(raw);
+    raw = null;                                   // let the big array go
+    var freshSig = tnaSignature(trimmed);
+    var changed = freshSig !== tnaSig;
+    TNA = trimmed;
+    tnaSig = freshSig;
+    tnaAt = new Date().toISOString();
+    tnaError = null;
+    if(!changed) return false;
+    rebuildOtt();
+    return true;
+  }catch(e){
+    tnaError = e.message;
+    return TNA.length === 0;
+  }
+}
+
+function rebuildOtt(){
+  OTT = buildOtt(cachedOttGrid);
+  OTT.sheet = cachedOttSheet;
+  OTT.sheetNames = cachedSheetNames;
+}
+
 function buildOtt(grid){
-  /* Dates against dates is how this workbook works now. The older sheets wrote
-     the words "Pass" and "Fail" into the cells, and those still read correctly,
-     so a file of either kind opens. */
+  /* The ERP is the source when it is configured and answering. Failing that,
+     an OTT sheet of actual dates in the workbook; failing that, an older sheet
+     with the words Pass and Fail written in. */
+  buildOttLines();
+  var fromErp = buildOttFromTna();
+  if(fromErp) return fromErp;
   if(grid && grid.length > 1){
     var fromDates = buildOttFromActuals(grid);
     if(fromDates) return fromDates;
@@ -2222,10 +2669,547 @@ function renderAll(){
   renderAlerts();
   renderTab(activeTab);
 }
+/* ============================================================
+   Strip plan
+
+   One row per order: the order's details frozen on the left, a day grid on the
+   right carrying two bars, the fabric window and the sewing window. Above them
+   two totals rows give the quantity landing on each day across every filtered
+   order, which is the number a planner is really looking for when they ask
+   what a day looks like.
+
+   The grid is drawn with one absolutely placed bar per window rather than a
+   cell per day, so a year of columns costs the same as a week.
+   ============================================================ */
+var GANTT_ZOOMS = [2, 3, 4, 6, 8, 11, 14, 18, 22, 28, 34, 42, 52, 64];
+var ganttZoom = 5;                       // index into GANTT_ZOOMS
+var ganttPage = 0;
+var ganttKeepScroll = null;
+var ganttParked = false;                 // has the view been placed yet
+var ganttFlag = "";                      // "", "yellow", "orange", "red", "any"
+
+/* The columns down the left, as the strip plan sheet has them. */
+/* The first four stay put while the grid scrolls sideways; the rest ride along
+   with it. freeze marks where the frozen block ends. */
+var GANTT_COLUMNS = [
+  { name: "Buyer",          w: 110, freeze: true },
+  { name: "Team",           w: 56,  freeze: true },
+  { name: "Dept",           w: 92,  freeze: true },
+  { name: "EWO",            w: 72,  freeze: true, num: true },
+  { name: "Execution Unit", w: 96 },
+  { name: "Status",         w: 94 },
+  { name: "Order Qty",      w: 78,  num: true },
+  { name: "Fab Qty",        w: 78,  num: true }
+];
+function ganttFrozenWidth(){
+  return GANTT_COLUMNS.filter(function(c){ return c.freeze; })
+                      .reduce(function(a, c){ return a + c.w; }, 0);
+}
+function ganttLeftWidth(){
+  return GANTT_COLUMNS.reduce(function(a, c){ return a + c.w; }, 0);
+}
+
+/* The window every bar is drawn inside: the orders on screen, trimmed to the
+   From and To range when one is set. */
+function ganttRange(rows){
+  var win = dateWindow();
+  var lo = null, hi = null;
+  function note(a, b){
+    if(a == null || b == null) return;
+    if(b < a){ var t = a; a = b; b = t; }
+    if(lo == null || a < lo) lo = a;
+    if(hi == null || b > hi) hi = b;
+  }
+  rows.forEach(function(r){
+    note(dat(r, "Adjusted Fabric Start"), dat(r, "Adjusted Fabric End"));
+    note(dat(r, "Adjusted sew start"), dat(r, "Adjusted sew end"));
+  });
+  if(win && win.from != null) lo = (lo == null || win.from > lo) ? win.from : lo;
+  if(win && win.to != null) hi = (hi == null || win.to < hi) ? win.to : hi;
+  if(lo == null || hi == null || hi < lo) return null;
+  var days = Math.round((hi - lo) / DAY) + 1;
+  if(days > 1100){ hi = lo + 1099 * DAY; days = 1100; }   // a sane ceiling
+  return { from: lo, to: hi, days: days };
+}
+
+/* Quantity landing on each day, spread evenly across the window, exactly as
+   the capacity charts do it. */
+function ganttTotals(rows, range, startCol, endCol, qtyCol){
+  var out = new Array(range.days);
+  for(var i = 0; i < range.days; i++) out[i] = 0;
+  rows.forEach(function(r){
+    var a = dat(r, startCol), b = dat(r, endCol), q = num(r, qtyCol);
+    if(a == null || b == null || q == null || q <= 0 || b < a) return;
+    var span = Math.round((b - a) / DAY) + 1;
+    var per = q / span;
+    var from = a < range.from ? range.from : a;
+    var to = b > range.to ? range.to : b;
+    if(to < from) return;
+    var i0 = Math.round((from - range.from) / DAY), i1 = Math.round((to - range.from) / DAY);
+    for(var i = i0; i <= i1; i++) out[i] += per;
+  });
+  return out;
+}
+
+/* Capacity laid out along the same days as the grid. Pass a day map for the
+   fabric side, or null and a set of unit keys for the sewing side. */
+function ganttCapacity(range, dayMap, unitKeysWanted){
+  var out = new Array(range.days);
+  for(var i = 0; i < range.days; i++){
+    var ms = range.from + i * DAY;
+    out[i] = dayMap ? (dayMap[ms] == null ? null : dayMap[ms]) : capacityOnDay(ms, unitKeysWanted);
+  }
+  return out;
+}
+
+/* A window drawn across the columns that are on show. With every day visible
+   that is one block; with a colour filter on it becomes one block per run of
+   visible days, so a bar never implies days that are not being displayed. */
+function ganttBar(range, colW, days, atCol, startCol, endCol, r, cls, label){
+  var a = dat(r, startCol), b = dat(r, endCol);
+  if(a == null || b == null || b < a) return "";
+  if(b < range.from || a > range.to) return "";
+  var i0 = Math.round(((a < range.from ? range.from : a) - range.from) / DAY);
+  var i1 = Math.round(((b > range.to ? range.to : b) - range.from) / DAY);
+  var tip = esc(label + ": " + fmtDate(a) + " to " + fmtDate(b)
+    + " (" + (Math.round((b - a) / DAY) + 1) + " days)");
+  var out = [], runStart = null, prev = null;
+  function flush(){
+    if(runStart == null) return;
+    var x = atCol[runStart] * colW, wdt = (atCol[prev] - atCol[runStart] + 1) * colW;
+    out.push('<div class="g-bar ' + cls + '" style="left:' + x + 'px;width:'
+      + Math.max(2, wdt - 1) + 'px" title="' + tip + '"></div>');
+    runStart = null;
+  }
+  for(var d = i0; d <= i1; d++){
+    if(atCol[d] == null){ flush(); continue; }
+    if(runStart == null) runStart = d;
+    else if(atCol[d] !== atCol[prev] + 1){ flush(); runStart = d; }
+    prev = d;
+  }
+  flush();
+  return out.join("");
+}
+
+/* Ranks the tint classes so "any" and a specific colour can both be tested. */
+function loadClass(load, cap){
+  if(cap == null || cap <= 0) return "";
+  var pct = 100 * load / cap;
+  if(pct > 110) return " over-red";
+  if(pct > 100) return " over-orange";
+  if(pct > 90) return " over-yellow";
+  return "";
+}
+
+function flagRank(cls){
+  if(cls === " over-red") return 3;
+  if(cls === " over-orange") return 2;
+  if(cls === " over-yellow") return 1;
+  return 0;
+}
+
+function renderGantt(){
+  var wrap = els.ganttScroll;
+  if(!wrap) return;
+  var colW = GANTT_ZOOMS[ganttZoom];
+  var range = ganttRange(filtered);
+  if(!range){
+    wrap.innerHTML = '<div class="empty-note">No order on screen has a fabric or sewing window to plot.</div>';
+    els.granHint.textContent = "";
+    els.gPageInfo.textContent = "";
+    return;
+  }
+
+  /* With a From and To set, the orders that actually fall in that window are
+     listed first; the rest follow, so the page on screen is the one being
+     asked about rather than whatever happened to sort first. */
+  var win = dateWindow();
+  var ordered = filtered;
+  if(win){
+    var inRange = [], outside = [];
+    filtered.forEach(function(r){
+      var touches = false;
+      [["Adjusted Fabric Start", "Adjusted Fabric End"], ["Adjusted sew start", "Adjusted sew end"]]
+        .forEach(function(pair){
+          var a = dat(r, pair[0]), b = dat(r, pair[1]);
+          if(a == null || b == null || b < a) return;
+          if(win.from != null && b < win.from) return;
+          if(win.to != null && a > win.to) return;
+          touches = true;
+        });
+      (touches ? inRange : outside).push(r);
+    });
+    function firstDay(r){
+      var a = dat(r, "Adjusted Fabric Start"), b = dat(r, "Adjusted sew start");
+      if(a == null) return b == null ? Infinity : b;
+      if(b == null) return a;
+      return a < b ? a : b;
+    }
+    inRange.sort(function(x, y){ return firstDay(x) - firstDay(y); });
+    ordered = inRange.concat(outside);
+  }
+
+  var per = parseInt(els.gRowsPer.value, 10) || 100;
+  var pages = Math.max(1, Math.ceil(ordered.length / per));
+  if(ganttPage >= pages) ganttPage = pages - 1;
+  if(ganttPage < 0) ganttPage = 0;
+  var slice = ordered.slice(ganttPage * per, (ganttPage + 1) * per);
+
+  var leftW = ganttLeftWidth();
+  var fabTot = ganttTotals(filtered, range, "Adjusted Fabric Start", "Adjusted Fabric End", "Fab Qty");
+  var sewTot = ganttTotals(filtered, range, "Adjusted sew start", "Adjusted sew end", "Order Qty");
+
+  /* Capacity for the same days, so a day that is too full can say so. The
+     sewing row counts pieces but the floor is booked in hours, so the load
+     compared against capacity is the FR hour spread, not the piece count. The
+     tooltip shows both so nobody has to guess which number is being judged. */
+  var fabCap = CAPACITY.fabricDays ? ganttCapacity(range, CAPACITY.fabricByDay) : null;
+  var sewCap = CAPACITY.days ? ganttCapacity(range, null, wantedUnitKeys(filtered)) : null;
+  var sewHours = sewCap ? ganttTotals(filtered, range, "Adjusted sew start", "Adjusted sew end", "FR hour") : null;
+
+  /* Which days are drawn. Normally all of them; with a colour picked, only the
+     days that carry that flag, pulled together side by side so a month of
+     trouble reads in one glance instead of hunting across the grid. */
+  var days = [];
+  for(var di = 0; di < range.days; di++){
+    if(!ganttFlag){ days.push(di); continue; }
+    var f = Math.max(flagRank(loadClass(fabTot[di], fabCap ? fabCap[di] : null)),
+                     flagRank(loadClass(sewHours ? sewHours[di] : 0, sewCap ? sewCap[di] : null)));
+    if(ganttFlag === "any" ? f > 0 : f === flagRank(" over-" + ganttFlag)) days.push(di);
+  }
+  var atCol = {};                          // day index -> column position
+  days.forEach(function(d, i){ atCol[d] = i; });
+  var trackW = days.length * colW;
+
+  /* How often a date label fits. At two pixels a day only the first of the
+     month has room; at thirty-plus every day does. A filtered view labels
+     every column, since the days are no longer consecutive. */
+  var every = (ganttFlag || colW >= 26) ? 1 : (colW >= 11 ? 7 : 0);
+  var html = [];
+
+  var frozenW = ganttFrozenWidth();
+  function cellsFor(vals, which){
+    return GANTT_COLUMNS.map(function(c, i){
+      if(!!c.freeze !== which) return "";
+      return '<div class="c' + (c.num ? " num" : "") + '" style="width:' + c.w + 'px">'
+        + (vals[i] == null ? "" : esc(String(vals[i]))) + '</div>';
+    }).join("");
+  }
+  function leftCells(vals){
+    return '<div class="g-freeze" style="width:' + frozenW + 'px">' + cellsFor(vals, true) + '</div>'
+         + '<div class="g-rest" style="width:' + (leftW - frozenW) + 'px">' + cellsFor(vals, false) + '</div>';
+  }
+
+  // header: the dates
+  var head = [];
+  days.forEach(function(d, i){
+    var ms = range.from + d * DAY;
+    var dt = new Date(ms);
+    var dow = dt.getUTCDay();
+    var first = dt.getUTCDate() === 1;
+    var show = first || (every === 1) || (every === 7 && dow === 6);
+    var cls = "g-day" + (dow === 5 ? " wknd" : "") + (first ? " mstart" : "");
+    head.push('<div class="' + cls + '" style="left:' + (i * colW) + 'px;width:' + colW + 'px" title="'
+      + esc(fmtDate(ms)) + '">'
+      + (show ? (every === 1 ? pad2(dt.getUTCDate()) + "-" + MONTH_ABBR[dt.getUTCMonth()]
+                             : (first ? MONTH_ABBR[dt.getUTCMonth()] + " " + String(dt.getUTCFullYear()).slice(2)
+                                      : dt.getUTCDate())) : "") + '</div>');
+  });
+  html.push('<div class="g-row g-head">' + leftCells(GANTT_COLUMNS.map(function(c){ return c.name; }), true)
+    + '<div class="g-track" style="width:' + trackW + 'px">' + head.join("") + '</div></div>');
+
+  function totalsRow(cls, label, arr, cap, judgeArr, unitWord){
+    var cells = [], sum = 0;
+    days.forEach(function(d, i){
+      sum += arr[d];
+      if(arr[d] <= 0 && (!cap || !cap[d])) return;
+      var judged = judgeArr ? judgeArr[d] : arr[d];
+      var c = cap ? cap[d] : null;
+      var tip = label + " " + fmtDate(range.from + d * DAY) + ": " + fmtInt(arr[d]);
+      if(c != null){
+        tip += " · " + fmtInt(judged) + " of " + fmtInt(c) + " " + unitWord
+             + (c > 0 ? " (" + Math.round(100 * judged / c) + "%)" : "");
+      }
+      cells.push('<div class="g-val' + loadClass(judged, c) + '" style="left:' + (i * colW)
+        + 'px;width:' + colW + 'px" title="' + esc(tip) + '">'
+        + (colW >= 18 ? fmtInt(arr[d]) : "") + '</div>');
+    });
+    return '<div class="g-row g-tot ' + cls + '">'
+      + leftCells([label, "", "", "", "", "", "", fmtInt(sum)])
+      + '<div class="g-track" style="width:' + trackW + 'px">' + cells.join("") + '</div></div>';
+  }
+  html.push(totalsRow("fab", "Fabric Total", fabTot, fabCap, null, "kg"));
+  html.push(totalsRow("sew", "Sewing Total", sewTot, sewCap, sewHours, "hours"));
+
+  // one row per order
+  slice.forEach(function(r){
+    var vals = [txt(r, "Buyer"), txt(r, "Team"), txt(r, "Dept"), num(r, "EWO"),
+                txt(r, "Execution Unit"), txt(r, "Status"),
+                fmtInt(num(r, "Order Qty") || 0), fmtInt(num(r, "Fab Qty") || 0)];
+    html.push('<div class="g-row">' + leftCells(vals)
+      + '<div class="g-track" style="width:' + trackW + 'px">'
+      + ganttBar(range, colW, days, atCol, "Adjusted Fabric Start", "Adjusted Fabric End", r, "fab", "Fabric")
+      + ganttBar(range, colW, days, atCol, "Adjusted sew start", "Adjusted sew end", r, "sew", "Sewing")
+      + '</div></div>');
+  });
+
+  // today, if it falls inside the window
+  if(TODAY >= range.from && TODAY <= range.to){
+    var ti = Math.round((TODAY - range.from) / DAY);
+    html.push('<div class="g-today" style="left:' + (leftW + ti * colW) + 'px;height:100%" title="Today"></div>');
+  }
+
+  wrap.innerHTML = html.join("");
+
+  els.gPageInfo.textContent = "Page " + (ganttPage + 1) + " of " + pages
+    + " · orders " + fmtInt(ganttPage * per + 1) + " to " + fmtInt(ganttPage * per + slice.length)
+    + " of " + fmtInt(ordered.length) + (win ? ", those in the range first" : "");
+  els.gPrev.disabled = ganttPage === 0;
+  els.gNext.disabled = ganttPage >= pages - 1;
+  els.granHint.textContent = fmtDate(range.from) + " to " + fmtDate(range.to)
+    + " · " + fmtInt(range.days) + " days at " + colW + "px";
+
+  if(ganttKeepScroll != null){ wrap.scrollLeft = ganttKeepScroll; ganttKeepScroll = null; }
+  else if(!ganttParked){
+    /* First look: start five days before today, so the recent past is on screen
+       next to what is coming. */
+    ganttParked = true;
+    ganttScrollTo(TODAY - 5 * DAY);
+  }
+}
+
+/* Puts a given day at the left edge of the grid, as near as the columns allow. */
+function ganttScrollTo(ms){
+  var wrap = els.ganttScroll;
+  if(!wrap) return;
+  var range = ganttRange(filtered);
+  if(!range) return;
+  var target = ms < range.from ? range.from : (ms > range.to ? range.to : ms);
+  var di = Math.round((target - range.from) / DAY);
+  var cells = wrap.querySelectorAll(".g-head .g-day");
+  if(!cells.length) return;
+  /* With a colour filter on, the columns are not consecutive days, so the
+     position is found from the column whose own date is nearest. */
+  var colW = GANTT_ZOOMS[ganttZoom];
+  var best = 0, bestGap = Infinity;
+  for(var i = 0; i < cells.length; i++){
+    var left = parseFloat(cells[i].style.left) || 0;
+    var dayAt = Math.round(left / colW);
+    var gap = Math.abs(dayAt - di);
+    if(ganttFlag){ gap = Math.abs(i - di); }
+    if(gap < bestGap){ bestGap = gap; best = left; }
+  }
+  wrap.scrollLeft = Math.max(0, (ganttFlag ? best : di * colW) - 8);
+}
+
+/* Puts today near the left edge of the visible grid. */
+function ganttScrollToToday(){ ganttScrollTo(TODAY - 5 * DAY); }
+
+var OTT_PAGE_SIZE = 200;
+
+/* The lines for the orders currently on screen, narrowed further by the tab's
+   own event and status pickers. */
+function ottVisibleLines(){
+  var keep = {};
+  filtered.forEach(function(r){ keep[String(num(r, "EWO"))] = true; });
+  var ev = els.ottEventFilter.value, st = els.ottStatusFilter.value;
+  return OTTLINES.filter(function(l){
+    if(!keep[l.ewo]) return false;
+    if(ev && l.event !== ev) return false;
+    if(st && l.status !== st) return false;
+    return true;
+  });
+}
+
+var OTT_STATUS_COLOUR = { "Pass": "#006040", "Fail": "#E8907A", "Overdue": "#C7511F",
+                          "Pending": "#F8B000", "N/A": "#D9D6CC" };
+
+/* Two pictures of the same lines: what state each milestone is in, event by
+   event, and how far past the plan the late ones ran. The first answers "where
+   are we stuck", the second "how bad is it when we slip". */
+function renderOttCharts(lines){
+  destroyChart("ottMixChart");
+  destroyChart("ottLateChart");
+
+  var order = [], tally = {};
+  lines.forEach(function(l){
+    if(!tally[l.event]){ tally[l.event] = { Pass: 0, Fail: 0, Overdue: 0, Pending: 0, "N/A": 0 }; order.push(l.event); }
+    tally[l.event][l.status]++;
+  });
+  order.sort(function(a, b){ return erpEventRank(a) - erpEventRank(b); });
+
+  var mixEl = document.getElementById("ottMixChart");
+  if(mixEl && order.length){
+    var states = ["Pass", "Fail", "Overdue", "Pending", "N/A"];
+    charts.ottMixChart = new Chart(mixEl, {
+      type: "bar",
+      data: { labels: order,
+        datasets: states.map(function(st){
+          return { label: st, data: order.map(function(e){ return tally[e][st]; }),
+                   backgroundColor: OTT_STATUS_COLOUR[st], borderWidth: 0 };
+        }) },
+      options: { indexAxis: "y", responsive: true, maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: { legend: { position: "bottom", labels: { font: MONO, boxWidth: 12 } },
+          tooltip: { callbacks: { label: function(c){
+            return c.dataset.label + ": " + fmtInt(c.parsed.x) + " orders"; } } } },
+        scales: { x: { stacked: true, ticks: { font: MONO }, grid: GRID },
+                  y: { stacked: true, ticks: { font: MONO }, grid: { display: false } } } }
+    });
+  }
+  els.ottMixHint.textContent = order.length
+    ? fmtInt(lines.length) + " event lines across " + order.length + " milestones"
+    : "Nothing to count for the orders on screen";
+
+  /* Late events bucketed by how late. Anything inside a week is one thing, a
+     month late is quite another, so the buckets widen as they go. */
+  var buckets = [[1, 3, "1 to 3 days"], [4, 7, "4 to 7 days"], [8, 14, "8 to 14 days"],
+                 [15, 30, "15 to 30 days"], [31, 1e9, "over 30 days"]];
+  var counts = buckets.map(function(){ return 0; });
+  var late = 0, worst = 0;
+  lines.forEach(function(l){
+    if(l.status !== "Fail" || l.days == null || l.days <= 0) return;
+    late++;
+    if(l.days > worst) worst = l.days;
+    for(var i = 0; i < buckets.length; i++){
+      if(l.days >= buckets[i][0] && l.days <= buckets[i][1]){ counts[i]++; break; }
+    }
+  });
+  var lateEl = document.getElementById("ottLateChart");
+  if(lateEl && late){
+    charts.ottLateChart = new Chart(lateEl, {
+      type: "bar",
+      data: { labels: buckets.map(function(b){ return b[2]; }),
+              datasets: [{ label: "Events", data: counts,
+                           backgroundColor: ["#F8B000", "#E8907A", "#C7511F", "#A33F14", "#6B2A0D"],
+                           borderWidth: 0 }] },
+      options: { responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false },
+          tooltip: { callbacks: { label: function(c){
+            return fmtInt(c.parsed.y) + " event" + (c.parsed.y === 1 ? "" : "s")
+              + " (" + Math.round(100 * c.parsed.y / late) + "% of the late ones)"; } } } },
+        scales: { x: { ticks: { font: MONO }, grid: { display: false } },
+                  y: { ticks: { font: MONO }, grid: GRID } } }
+    });
+  }
+  els.ottLateHint.textContent = late
+    ? fmtInt(late) + " events finished late, the worst by " + fmtInt(worst) + " days"
+    : "Nothing on screen finished late";
+}
+
+function renderOttTab(){
+  // The event picker lists whatever the ERP actually sent, busiest first.
+  var counts = {};
+  OTTLINES.forEach(function(l){ counts[l.event] = (counts[l.event] || 0) + 1; });
+  var evs = Object.keys(counts).sort(function(a, b){
+    var ra = erpEventRank(a), rb = erpEventRank(b);
+    if(ra !== rb) return ra - rb;
+    return counts[b] - counts[a];
+  });
+  var keepEv = els.ottEventFilter.value;
+  els.ottEventFilter.innerHTML = '<option value="">All events</option>'
+    + evs.map(function(e){ return '<option value="' + esc(e) + '">' + esc(e) + ' (' + fmtInt(counts[e]) + ')</option>'; }).join("");
+  if(keepEv && evs.indexOf(keepEv) !== -1) els.ottEventFilter.value = keepEv;
+
+  var lines = ottVisibleLines();
+  var tally = { Pass: 0, Fail: 0, Overdue: 0, Pending: 0, "N/A": 0 };
+  var lateDays = 0, lateCount = 0, orders = {};
+  lines.forEach(function(l){
+    tally[l.status]++;
+    orders[l.ewo] = true;
+    if(l.status === "Fail" && l.days != null){ lateDays += l.days; lateCount++; }
+  });
+  var judged = tally.Pass + tally.Fail;
+  var tiles = [
+    ["Orders", fmtInt(Object.keys(orders).length), fmtInt(lines.length) + " event lines"],
+    ["On time", judged ? Math.round(1000 * tally.Pass / judged) / 10 + "%" : "n/a",
+      fmtInt(tally.Pass) + " of " + fmtInt(judged) + " completed events"],
+    ["Fail", fmtInt(tally.Fail), lateCount ? "average " + fmt1(lateDays / lateCount) + " days late" : "none late"],
+    ["Overdue", fmtInt(tally.Overdue), "planned date passed, not completed"],
+    ["Pending", fmtInt(tally.Pending), "not completed, still ahead"],
+    ["No plan", fmtInt(tally["N/A"]), "the EWO sheet has no date for this event"]
+  ];
+  els.ottKpis.innerHTML = tiles.map(function(t){
+    return '<div class="kpi"><div class="label">' + esc(t[0]) + '</div><div class="value">' + esc(t[1])
+      + '</div><div class="foot">' + esc(t[2]) + '</div></div>'; }).join("");
+
+  /* Only things that are actually wrong are reported here. Where the dates
+     came from and which events are followed are settled facts, not news, and
+     a standing paragraph about them is just something to read past. */
+  var notes = [];
+  if(tnaError && tnaSource !== "sheet"){
+    notes.push("<strong>The ERP report could not be read.</strong> " + esc(tnaError));
+  }else if(!TNA.length && !ERP_TNA_URL){
+    /* Nothing from a sheet and no endpoint either: there is genuinely no
+       source of actual dates. */
+    notes.push("<strong>No source of actual dates.</strong><br/>"
+      + "Put an <code>OTT</code> sheet in the fabric delivery workbook with"
+      + " <code>EWONo</code>, <code>EventDescription</code> and <code>CompleteDate</code> columns,"
+      + " or set <code>ERP_TNA_URL</code> in <code>config.js</code> to read the ERP report live.");
+  }
+
+  // Only worth saying when no list is in force, because then an unpaired name
+  // means a milestone is silently missing rather than deliberately left out.
+  if(TNA_IGNORED_EVENTS.length && !erpEventWhitelisted()){
+    var shown = TNA_IGNORED_EVENTS.slice(0, 12).map(esc).join(", ");
+    notes.push("The ERP reports " + fmtInt(TNA_IGNORED_EVENTS.length)
+      + " events the EWO sheet has no plan column for, so they are left out: <strong>" + shown
+      + (TNA_IGNORED_EVENTS.length > 12 ? ", and " + fmtInt(TNA_IGNORED_EVENTS.length - 12) + " more" : "")
+      + "</strong>. Pair any that belong to a column under a different name in"
+      + " <code>ERP_EVENT_ALIASES</code> in <code>config.js</code>.");
+  }
+  /* No OTT data at all needs explaining. An empty table because the filters
+     are tight already says so inside the table itself. */
+  if(!TNA.length && !notes.length){
+    notes.push("<strong>No OTT data was found.</strong> The fabric delivery workbook needs a sheet named"
+      + " <code>OTT</code> with <code>EWONo</code>, <code>EventDescription</code> and"
+      + " <code>CompleteDate</code> columns.");
+  }
+  els.ottSourceNote.innerHTML = notes.join("<br/><br/>");
+  els.ottSourceNote.style.display = notes.length ? "" : "none";
+
+  var pages = Math.max(1, Math.ceil(lines.length / OTT_PAGE_SIZE));
+  if(ottPage >= pages) ottPage = pages - 1;
+  if(ottPage < 0) ottPage = 0;
+  var slice = lines.slice(ottPage * OTT_PAGE_SIZE, (ottPage + 1) * OTT_PAGE_SIZE);
+
+  els.ottTableHint.textContent = fmtInt(lines.length) + " event lines"
+    + (TNA.length ? " from " + fmtInt(TNA.length) + " records" : "")
+    + (tnaSource === "sheet" ? " in the OTT sheet" : (tnaAt ? ", read from the ERP " + ago(tnaAt) : ""));
+  els.ottPageInfo.textContent = "Page " + (ottPage + 1) + " of " + pages
+    + (lines.length ? " · lines " + fmtInt(ottPage * OTT_PAGE_SIZE + 1) + " to "
+       + fmtInt(ottPage * OTT_PAGE_SIZE + slice.length) : "");
+  els.ottPrev.disabled = ottPage === 0;
+  els.ottNext.disabled = ottPage >= pages - 1;
+
+  renderOttCharts(lines);
+
+  var cls = { "Pass": "pass", "Fail": "fail", "Overdue": "overdue", "Pending": "pending", "N/A": "na" };
+  var head = '<thead><tr><th>EWO</th><th>Buyer</th><th>Unit</th><th>Event</th><th>Plan</th>'
+    + '<th>Complete</th><th>Revised</th><th class="num">Days</th><th>Department</th>'
+    + '<th>Status</th></tr></thead>';
+  var body = '<tbody>' + slice.map(function(l){
+    return '<tr><td>' + esc(l.ewo) + '</td>'
+      + '<td>' + esc(txt(l.order, "Buyer")) + '</td>'
+      + '<td>' + esc(txt(l.order, "Execution Unit")) + '</td>'
+      + '<td>' + esc(l.event) + '</td>'
+      + '<td>' + (l.plan != null ? esc(fmtDate(l.plan)) : "") + '</td>'
+      + '<td>' + (l.complete != null ? esc(fmtDate(l.complete)) : "") + '</td>'
+      + '<td>' + (l.revision != null ? esc(fmtDate(l.revision)) : "") + '</td>'
+      + '<td class="num">' + (l.days == null ? "" : (l.days > 0 ? "+" + l.days : l.days)) + '</td>'
+      + '<td>' + esc(l.dept) + '</td>'
+      + '<td><span class="pill ' + cls[l.status] + '">' + esc(l.status) + '</span></td></tr>';
+  }).join("") + '</tbody>';
+
+  els.ottTable.innerHTML = lines.length ? head + body
+    : '<tbody><tr><td class="empty-note">No event lines for the orders on screen.</td></tr></tbody>';
+}
+
 function renderTab(name){
   if(name === "overview") renderDimensionCharts();
+  else if(name === "ott") renderOttTab();
   else if(name === "attention") renderAttnTable();
-  else if(name === "timeline"){ renderMonthCharts(); renderWorkbookMonthly(); }
+  else if(name === "timeline") renderGantt();
   else if(name === "capacity") renderCapacity();
   else if(name === "delivery") renderDelivery();
   else if(name === "summary") renderPivot();
@@ -2508,20 +3492,6 @@ function bucketLabel(ms, gran){
   return fmtDate(ms);                        // day, and the Monday for a week
 }
 
-function bucketSeries(dateCol, measure, gran, rowsIn){
-  if(IDX[dateCol] == null) return { labels: [], values: [] };
-  var m = {};
-  (rowsIn || filtered).forEach(function(r){
-    var d = dat(r, dateCol);
-    if(d == null) return;
-    var k = bucketKey(d, gran);
-    m[k] = (m[k] || 0) + (measure ? (num(r, measure) || 0) : 1);
-  });
-  var keys = Object.keys(m).map(Number).sort(function(a, b){ return a - b; });
-  return { labels: keys.map(function(k){ return bucketLabel(k, gran); }),
-           values: keys.map(function(k){ return m[k]; }) };
-}
-
 function lineChart(canvasId, series, label, colour, fill, gran){
   destroyChart(canvasId);
   var el = document.getElementById(canvasId);
@@ -2544,74 +3514,6 @@ function lineChart(canvasId, series, label, colour, fill, gran){
   });
 }
 
-function renderMonthCharts(){
-  var g = granularity;
-  var win = dateWindow();
-  var pcd = bucketSeries("Adjusted PCD", "Order Qty", g, rowsInWindow(filtered, "Adjusted PCD", null, win));
-  lineChart("pcdChart", pcd, "Order Qty", "#006040", "rgba(0,96,64,0.10)", g);
-  lineChart("fabMonthChart", bucketSeries("Adjusted Fabric Start", "Fab Qty", g,
-              rowsInWindow(filtered, "Adjusted Fabric Start", "Adjusted Fabric End", win)),
-            "Fab Qty", "#F8B000", "rgba(248,176,0,0.14)", g);
-  lineChart("sewMonthChart", bucketSeries("Adjusted sew start", "FR hour", g,
-              rowsInWindow(filtered, "Adjusted sew start", "Adjusted sew end", win)),
-            "FR hour", "#0A7A54", "rgba(10,122,84,0.10)", g);
-
-  var word = g === "day" ? "day" : (g === "week" ? "week" : "month");
-  els.granHint.textContent = pcd.labels.length
-    ? pcd.labels.length + " " + word + (pcd.labels.length === 1 ? "" : "s") + " with orders"
-      + (g === "week" ? ". Each point is the Monday of that week." : "")
-    : "";
-  document.querySelectorAll("[data-grantitle]").forEach(function(h){
-    h.textContent = h.getAttribute("data-grantitle").replace("{g}", word);
-  });
-}
-
-/* The same monthly totals the fab and Sew sheets held, rebuilt from the EWO
-   rows. Those sheets spread each order's quantity evenly across its planned
-   window and then add the days up by month, which is exactly what this does,
-   so the figures match whether the sheets are in the workbook or not. Every
-   order is counted, not just the filtered ones, to keep these two charts the
-   whole-workbook view they have always been. */
-function monthlyFromEwo(startCol, endCol, qtyCol){
-  var sr = spreadSeries(ROWS, startCol, endCol, qtyCol, "month", null, null);
-  return { labels: sr.keys.map(function(k){ return bucketLabel(k, "month"); }),
-           values: sr.series.All || [] };
-}
-
-function renderWorkbookMonthly(){
-  [["fabricChart", FSUM, "Fabric qty", "#F8B000", "rgba(248,176,0,0.14)",
-    "fabricChartHint", "Adjusted Fabric Start", "Adjusted Fabric End", "InHouse", "Fsum"],
-   ["sewChart", SSUM, "Sewing hours", "#006040", "rgba(0,96,64,0.10)",
-    "sewChartHint", "Adjusted sew start", "Adjusted sew end", "FR hour", "Ssum"]].forEach(function(spec){
-    destroyChart(spec[0]);
-    var rows = spec[1] || [];
-    var monthRe = /^[A-Za-z]+\s?\d{2}$/;
-    var seen = new Map();
-    rows.forEach(function(r){
-      if(!r) return;
-      var m = r[0], v = r[1];
-      if(typeof v === "string" && v.trim() !== "" && !isNaN(v)) v = parseFloat(v);
-      if(typeof m === "string" && monthRe.test(m.trim()) && typeof v === "number" && !seen.has(m.trim())){
-        seen.set(m.trim(), v);
-      }
-    });
-    var hintEl = els[spec[5]];
-    if(seen.size === 0){
-      // No usable summary sheet: work it out from the orders instead.
-      var built = monthlyFromEwo(spec[6], spec[7], spec[8]);
-      if(hintEl) hintEl.textContent = "Built from the EWO sheet, every order spread across its planned window. "
-        + "The " + spec[9] + " sheet is not in the workbook.";
-      if(!built.labels.length) return;
-      lineChart(spec[0], built, spec[2], spec[3], spec[4]);
-      return;
-    }
-    if(hintEl) hintEl.textContent = "Straight from the " + spec[9] + " sheet, so filters do not change it";
-    lineChart(spec[0], { labels: Array.from(seen.keys()), values: Array.from(seen.values()) },
-              spec[2], spec[3], spec[4]);
-  });
-}
-
-/* ---------- summary grid ---------- */
 var PIVOT_MEASURES = [
   { name: "Orders",      get: function(g){ return g.length; },            fmt: fmtInt },
   { name: "Order Qty",   get: function(g){ return sum(g, "Order Qty"); }, fmt: fmtInt },
@@ -2687,12 +3589,11 @@ function renderPivot(){
 }
 
 /* ---------- detail table ---------- */
+
 function buildColumnChooser(){
   var previous = visibleCols.slice();
-  var wanted = {};
-  DEFAULT_TABLE_COLUMNS.forEach(function(c){ wanted[colKey(headerFor(c))] = true; });
   visibleCols = HEADERS.filter(function(h){
-    return !COLEMPTY[h] && (previous.length ? previous.indexOf(h) !== -1 : wanted[colKey(h)] === true);
+    return !COLEMPTY[h] && (previous.length ? previous.indexOf(h) !== -1 : DEFAULT_TABLE_COLUMNS.indexOf(h) !== -1);
   });
   if(visibleCols.length === 0){
     visibleCols = HEADERS.filter(function(h){ return !COLEMPTY[h]; }).slice(0, 12);
@@ -2736,8 +3637,13 @@ function statusBadge(status){
 function cellHtml(r, name){
   if(name === "Status") return statusBadge(txt(r, name));
   var t = COLTYPE[name];
-  if(t === "date"){ var d = dat(r, name); return d == null ? esc(txt(r, name)) : esc(fmtDate(d)); }
   if(t === "number"){ var v = num(r, name); return v == null ? "" : esc(fmtInt(v)); }
+  /* Try the date first whatever the column was classified as. A column holding
+     mostly the word "InStock" with a few real dates is typed as text, and its
+     dates would otherwise print raw as 2026-06-18 while every other table
+     shows 18-Jun-26. */
+  var d = dat(r, name);
+  if(d != null) return esc(fmtDate(d));
   return esc(txt(r, name));
 }
 
@@ -3225,23 +4131,77 @@ function renderDelivery(){
   var have = LOCK.length > 0 || DELIV.length > 0;
   els.deliveryEmpty.style.display = have ? "none" : "block";
   els.deliveryBody.style.display = have ? "block" : "none";
-  if(!have) return;
+  if(!have){
+    /* Blank is not an answer. Say whether the workbook arrived at all, and if
+       it did, which sheets were in it, so the gap is obvious. */
+    var msg;
+    if(!DELIVERY_SHEETS.length){
+      msg = "<strong>The fabric delivery workbook was not loaded.</strong><br/>"
+          + "Check <code>DELIVERY_FILE_PATH</code> in <code>config.js</code>, and that the file is"
+          + " shared with the dashboard app the same way the EWO workbook is.";
+    }else{
+      msg = "<strong>The fabric delivery workbook loaded, but none of the sheets this tab needs"
+          + " were in it.</strong><br/>It wants <code>Delivery</code> for the deliveries and"
+          + " <code>Locked Fabric</code>, <code>RFD</code> and <code>LockRepo</code> for the"
+          + " weekly figures.<br/>Sheets found: <strong>" + DELIVERY_SHEETS.map(esc).join(", ")
+          + "</strong>.";
+    }
+    els.deliveryEmpty.innerHTML = msg;
+    return;
+  }
 
   var join = orderJoin();
   var lock = join ? LOCK.filter(function(r){ return join(ln(r, "EWO"), lt(r, "Buyer"), lt(r, "Unit")); }) : LOCK;
   var deliv = join ? DELIV.filter(function(r){ return join(dn(r, "ExportOrderNo"), dt_(r, "Buyer"), dt_(r, "BeneficieryUnit")); }) : DELIV;
   var asOfMs = asOf || TODAY;
 
-  // ---- the report window: the lock month ----
+  /* Everything in the weekly KPI block is measured against the lock plan. When
+     the workbook carries only deliveries, those panels have nothing to stand
+     on, so they step aside and the tab reports what the deliveries themselves
+     say rather than a screen of zeroes. */
+  var hasPlan = LOCK.length > 0;
+  document.querySelectorAll("#page-delivery .needs-plan").forEach(function(el){
+    el.style.display = hasPlan ? "" : "none";
+  });
+  els.noPlanNote.style.display = hasPlan ? "none" : "";
+  if(!hasPlan){
+    els.noPlanNote.innerHTML = "<strong>Deliveries only.</strong> The weekly KPI figures compare"
+      + " deliveries against the fabric lock plan, which lives in the <code>Locked Fabric</code>,"
+      + " <code>RFD</code> and <code>LockRepo</code> sheets. This workbook has"
+      + (DELIVERY_SHEETS.length ? " <strong>" + DELIVERY_SHEETS.map(esc).join(", ") + "</strong>" : " none of them")
+      + ", so those panels are hidden and what follows is built from the delivery records alone.";
+  }
+
+  // ---- the report window ----
   var from = parseDate(LOCKMETA.reportFrom);
   if(from == null && lock.length){
     from = Math.min.apply(null, lock.map(function(r){ return ld(r, "LockStart") || Infinity; }));
   }
+  if((from == null || !isFinite(from)) && deliv.length){
+    /* No plan to take the month from. The From and To boxes in the filter bar
+       decide it when they are set; otherwise the whole span of deliveries is
+       shown, because hiding most of the file behind an invisible default is
+       how a tab comes to look empty. */
+    var win = dateWindow();
+    var first = null, last = null;
+    deliv.forEach(function(r){
+      var d = dd(r, "DeliveryDate");
+      if(d == null) return;
+      if(first == null || d < first) first = d;
+      if(last == null || d > last) last = d;
+    });
+    from = (win && win.from != null) ? win.from : first;
+    var to = (win && win.to != null) ? win.to : last;
+    if(to != null) asOfMs = to;
+  }
   if(from == null || !isFinite(from)) from = asOfMs;
   var monthEnd = (function(){ var d = new Date(from); return Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0); })();
 
-  els.asOfHint.textContent = "Lock month from " + fmtDate(from) + ". Delivered and RFD figures are as of the last export"
-    + (LOCKMETA.reportTo ? ", the published report was as of " + fmtDate(parseDate(LOCKMETA.reportTo)) + "." : ".");
+  els.asOfHint.textContent = hasPlan
+    ? "Lock month from " + fmtDate(from) + ". Delivered and RFD figures are as of the last export"
+      + (LOCKMETA.reportTo ? ", the published report was as of " + fmtDate(parseDate(LOCKMETA.reportTo)) + "." : ".")
+    : "Deliveries from " + fmtDate(from) + " to " + fmtDate(asOfMs)
+      + ". Set From and To in the filter bar above to narrow this.";
 
   // ---- weekly KPI groupings ----
   var byUnit = kpiGroup(lock, function(r){ return lt(r, "Unit"); }, asOfMs);
@@ -3275,6 +4235,36 @@ function renderDelivery(){
   var dayWord = useSheetDays ? " working days" : " days";
   var target = toNum(LOCKMETA.monthTarget);
   var pct = tot.req > 0 ? Math.round(100 * tot.actual / tot.req) : 0;
+
+  /* Without a plan there is no "required" or "achieved" to report, so the
+     tiles describe the deliveries instead: how much came in, of what kind,
+     from whom, and at what daily rate. */
+  if(!hasPlan){
+    var buyers = {}, units = {}, types = {}, kgAll = 0;
+    deliv.forEach(function(r){
+      var d = dd(r, "DeliveryDate"); if(d == null || d < from || d > asOfMs) return;
+      kgAll += dn(r, "DeliveryQtyKg");
+      var b = dt_(r, "Buyer"); if(b) buyers[b] = true;
+      var u = dt_(r, "BeneficieryUnit"); if(u) units[u] = true;
+      var t = dt_(r, "FabricType"); if(t) types[t] = true;
+    });
+    var dtiles = [
+      ["Delivery lines", fmtInt(lines), fmtDate(from) + " to " + fmtDate(asOfMs)],
+      ["Fresh delivery", fmtInt(fresh), "kg"],
+      ["Re-delivery", fmtInt(redeliv), "kg"],
+      ["Returns", fmtInt(-returns), "kg"],
+      ["Net received", fmtInt(fresh + redeliv - returns), "fresh plus re-delivery, less returns"],
+      ["Daily average", fmtInt(fresh / Math.max(1, daysDone)), "kg over " + daysDone + dayWord],
+      ["Buyers", fmtInt(Object.keys(buyers).length), "with a delivery in the window"],
+      ["Receiving units", fmtInt(Object.keys(units).length), ""],
+      ["Fabric types", fmtInt(Object.keys(types).length), ""],
+      ["All quantity", fmtInt(kgAll), "kg on every line, whatever the type"]
+    ];
+    els.delKpis.innerHTML = dtiles.map(function(t){
+      return '<div class="kpi"><div class="label">' + esc(t[0]) + '</div><div class="value">' + esc(t[1])
+        + '</div><div class="foot">' + esc(t[2]) + '</div></div>'; }).join("");
+  }
+
   var tiles = [
     ["Month target", target ? fmtInt(target) : "n/a", target ? "kg, from the KPI sheet" : "not in the sheet"],
     ["Lock plan for month", fmtInt(planTotal), lock.length + " bookings"],
@@ -3287,9 +4277,11 @@ function renderDelivery(){
     ["Daily average so far", fmtInt(fresh / daysDone), daysDone + dayWord],
     ["Needed per day to hit plan", daysLeft ? fmtInt(Math.max(0, planTotal - fresh) / daysLeft) : "n/a", daysLeft + dayWord + " left"]
   ];
-  els.delKpis.innerHTML = tiles.map(function(t){
-    return '<div class="kpi"><div class="label">' + esc(t[0]) + '</div><div class="value">' + esc(t[1])
-      + '</div><div class="foot">' + esc(t[2]) + '</div></div>'; }).join("");
+  if(hasPlan){
+    els.delKpis.innerHTML = tiles.map(function(t){
+      return '<div class="kpi"><div class="label">' + esc(t[0]) + '</div><div class="value">' + esc(t[1])
+        + '</div><div class="foot">' + esc(t[2]) + '</div></div>'; }).join("");
+  }
 
   // ---- cumulative plan against actual across the lock month ----
   var days = []; for(var d = from; d <= monthEnd; d += DAY) days.push(d);
@@ -3631,6 +4623,8 @@ els.granSwitch.addEventListener("click", function(e){
   var b = e.target.closest(".segbtn");
   if(!b) return;
   granularity = b.getAttribute("data-gran");
+  // The strip plan has no buckets, so the switch sets how wide a day is drawn.
+  ganttZoom = granularity === "day" ? 5 : (granularity === "week" ? 3 : 1);
   Array.prototype.forEach.call(els.granSwitch.querySelectorAll(".segbtn"), function(x){
     x.classList.toggle("on", x.getAttribute("data-gran") === granularity);
   });
@@ -3651,6 +4645,56 @@ els.pageSize.addEventListener("change", function(){ page = 0; renderTable(); });
 els.prevPage.addEventListener("click", function(){ page--; renderTable(); });
 els.nextPage.addEventListener("click", function(){ page++; renderTable(); });
 els.csvBtn.addEventListener("click", exportCsv);
+/* Zooming around a fixed point: whatever column sits under anchorX stays
+   under it afterwards, so the eye does not lose its place. Without an anchor
+   the middle of the view is held instead. */
+function ganttSetZoom(next, anchorX){
+  next = Math.max(0, Math.min(GANTT_ZOOMS.length - 1, next));
+  if(next === ganttZoom) return;
+  var wrap = els.ganttScroll;
+  var oldW = GANTT_ZOOMS[ganttZoom];
+  var leftW = ganttFrozenWidth();
+  var x = anchorX == null ? wrap.clientWidth / 2 : anchorX;
+  var atCol = (wrap.scrollLeft + x - leftW) / oldW;      // column under the pointer
+  ganttZoom = next;
+  ganttKeepScroll = 0;                                   // stop the renderer re-parking
+  renderGantt();
+  var newW = GANTT_ZOOMS[ganttZoom];
+  wrap.scrollLeft = Math.max(0, atCol * newW + leftW - x);
+}
+
+els.zoomIn.addEventListener("click", function(){ ganttSetZoom(ganttZoom + 1, null); });
+els.zoomOut.addEventListener("click", function(){ ganttSetZoom(ganttZoom - 1, null); });
+els.gotoToday.addEventListener("click", ganttScrollToToday);
+els.gFlag.addEventListener("change", function(){
+  ganttFlag = els.gFlag.value;
+  ganttKeepScroll = 0;
+  renderGantt();
+});
+
+/* The wheel zooms while the pointer is over the grid, which is how every plan
+   board people already use behaves. Shift plus wheel scrolls the rows instead,
+   for anyone who wants to read down a long list. */
+els.ganttScroll.addEventListener("wheel", function(e){
+  if(e.shiftKey) return;                                 // let it scroll
+  e.preventDefault();
+  var rect = els.ganttScroll.getBoundingClientRect();
+  ganttSetZoom(ganttZoom + (e.deltaY < 0 ? 1 : -1), e.clientX - rect.left);
+}, { passive: false });
+els.gRowsPer.addEventListener("change", function(){ ganttPage = 0; renderGantt(); });
+els.gPrev.addEventListener("click", function(){
+  ganttKeepScroll = els.ganttScroll.scrollLeft; ganttPage--; renderGantt();
+});
+els.gNext.addEventListener("click", function(){
+  ganttKeepScroll = els.ganttScroll.scrollLeft; ganttPage++; renderGantt();
+});
+
+[els.ottEventFilter, els.ottStatusFilter].forEach(function(el){
+  el.addEventListener("change", function(){ ottPage = 0; renderOttTab(); });
+});
+els.ottPrev.addEventListener("click", function(){ ottPage--; renderOttTab(); });
+els.ottNext.addEventListener("click", function(){ ottPage++; renderOttTab(); });
+
 els.refreshBtn.addEventListener("click", function(){
   flashStatus(true);
   load({ interactive: true }).then(function(){ flashStatus(false); });
