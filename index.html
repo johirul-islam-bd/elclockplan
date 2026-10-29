@@ -1073,7 +1073,7 @@ var msalApp = null;
    department opens is worse than leaving it out. */
 function greeting(acct){
   var h = new Date().getHours();
-  var part = h < 12 ? "Good morning" : (h < 17 ? "Good afternoon" : "Good evening");
+  var part = h < 12 ? "Good Morning" : (h < 17 ? "Good Afternoon" : "Good Evening");
   var name = String((acct && (acct.name || acct.username)) || "").trim();
   if(name.indexOf("@") !== -1) name = name.split("@")[0].replace(/[._-]+/g, " ");
   var drop = ["md", "md.", "mohammad", "muhammad", "mohammed", "mst", "mst.", "mrs", "mrs.",
