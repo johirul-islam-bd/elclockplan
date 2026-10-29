@@ -494,7 +494,7 @@
       <div class="grid1">
         <div class="panel">
           <h3>Fabric sourcing split</h3>
-          <div class="hint">In-house knitting against outside purchase</div>
+          <div class="hint">In-house Fabric Delivery against outside purchase</div>
           <div class="chart-box"><canvas id="sourceChart"></canvas></div>
         </div>
       </div>
@@ -573,7 +573,7 @@
       <div class="grid1">
         <div class="panel">
           <h3 data-grantitle2="In-house fabric load per {g}">In-house fabric load per day</h3>
-          <div class="hint" id="fabLoadHint">Textile mill knitting load: InHouse kg spread across the fabric window</div>
+          <div class="hint" id="fabLoadHint">Textile mill Fabric Delivery load: InHouse kg spread across the fabric window</div>
           <div class="chart-box wide"><canvas id="fabLoadChart"></canvas></div>
         </div>
         <div class="panel">
@@ -1906,7 +1906,7 @@ function capacitySeries(keys, gran, unitKeysWanted){
   return seen ? out : null;
 }
 
-/* Textile knitting capacity per bucket, in kg. There is one figure for the
+/* Textile Fabric Delivery capacity per bucket, in kg. There is one figure for the
    whole mill, not one per garment unit, so a unit filter does not change it. */
 function fabricCapacitySeries(keys, gran){
   if(!keys.length || !CAPACITY.fabricDays) return null;
@@ -4177,7 +4177,7 @@ function renderCapacity(){
   var g = granularity;
   var win = dateWindow();
   // The fab sheet spreads InHouse, not Fab Qty: it is the textile mill's own
-  // knitting load, and fabric bought outside is not part of it. Verified on
+  // Fabric Delivery load, and fabric bought outside is not part of it. Verified on
   // all 2,128 rows.
   /* Each chart takes the range against its own dates, so "1 to 31 October"
      means October fabric on the fabric chart and October sewing on the sewing
@@ -4189,9 +4189,9 @@ function renderCapacity(){
   var fabCap = fabricCapacitySeries(fab.keys, g);
   stackedChart("fabLoadChart", fab.keys, fab.series, g, "kg", ["#006040", "#F8B000"], fabCap);
   els.fabLoadHint.textContent = CAPACITY.fabricDays
-    ? "InHouse kg spread across the fabric window. The blue band is the textile knitting capacity from the Capacity sheet"
+    ? "InHouse kg spread across the fabric window. The blue band is the textile Fabric Delivery capacity from the Capacity sheet"
       + (CAPACITY.fabricLabel ? " (" + CAPACITY.fabricLabel + ")" : "") + ", which is the whole mill and so does not change with a unit filter."
-    : "Textile mill knitting load: InHouse kg spread across the fabric window.";
+    : "Textile mill Fabric Delivery load: InHouse kg spread across the fabric window.";
 
   var wantKeys = wantedUnitKeys(sewRows);
   var sewCap = capacitySeries(sew.keys, g, wantKeys);
