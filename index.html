@@ -456,23 +456,23 @@
       <div class="kpis" id="kpiRow"></div>
       <div class="grid4">
         <div class="panel">
-          <h3>Lock Status</h3>
+          <h3>T&A Event Lock Status</h3>
           <div class="hint">Orders by planning state</div>
           <div class="chart-box"><canvas id="statusChart"></canvas></div>
         </div>
         <div class="panel">
           <h3>Execution Unit</h3>
-          <div class="hint">Number of orders, split by lock status</div>
+          <div class="hint">Number of orders, split by T&A Event Lock Status</div>
           <div class="chart-box"><canvas id="execChart"></canvas></div>
         </div>
         <div class="panel">
           <h3>Team</h3>
-          <div class="hint">Number of orders, split by lock status</div>
+          <div class="hint">Number of orders, split by T&A Event Lock Status</div>
           <div class="chart-box"><canvas id="teamChart"></canvas></div>
         </div>
         <div class="panel">
           <h3>Top buyers</h3>
-          <div class="hint">Number of orders, split by lock status, busiest ten</div>
+          <div class="hint">Number of orders, split by T&A Event Lock Status, busiest ten</div>
           <div class="chart-box"><canvas id="buyerChart"></canvas></div>
         </div>
       </div>
@@ -883,7 +883,7 @@ var AVERAGE_COLUMNS = ["fab st to pcd", "fab dur", "sew dur", "pcd to sew st", "
 var FILTER_DIMENSIONS = ["Status", "Latest note", "Execution Unit", "Team", "Buyer", "Dept"];
 /* The sheet's column name on the left, what the filter bar calls it on the
    right. Renaming here changes the label only; the data is untouched. */
-var FILTER_LABELS = { "Status": "Lock Status" };
+var FILTER_LABELS = { "Status": "T&A Event Lock Status" };
 
 /* There is no "date field" to pick any more. From and To are handed to each
    chart, and each chart judges them against the dates it is actually about:
@@ -3531,7 +3531,7 @@ function barChart(canvasId, entries, label){
   });
 }
 
-/* Lock status keeps the same colour wherever it appears, so a reader can move
+/* T&A Event Lock Status keeps the same colour wherever it appears, so a reader can move
    between the unit, team and buyer charts without relearning the legend. The
    families are matched loosely because the sheet writes them several ways
    ("Locked", "LOCKED 100%", "Fabric plan TBC", "Hold/Block").
@@ -3553,7 +3553,7 @@ function statusColour(name, fallbackIndex){
   return PALETTE[(fallbackIndex + 5) % PALETTE.length];
 }
 
-/* Horizontal bars, one per value of dim, each bar split by lock status. The
+/* Horizontal bars, one per value of dim, each bar split by T&A Event Lock Status. The
    question these answer is "of this unit's orders, how many are locked, how
    many are still fabric plan TBC, how many are on hold".
    measure null counts orders; a column name sums that column instead. */
@@ -4030,7 +4030,7 @@ function exportStripCsv(){
 /* The event lines as they appear on the OTT tab, filters and all. */
 function exportOttCsv(){
   var lines = ottVisibleLines();
-  var head = ["EWO", "Buyer", "Team", "Dept", "Execution Unit", "Lock Status", "Event",
+  var head = ["EWO", "Buyer", "Team", "Dept", "Execution Unit", "T&A Event Lock Status", "Event",
               "Plan", "Complete", "Revised", "Days", "Department", "Status"];
   var out = [head.map(csvCell).join(",")];
   function d(v){ return v == null ? "" : new Date(v).toISOString().slice(0, 10); }
