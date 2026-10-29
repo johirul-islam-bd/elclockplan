@@ -4287,13 +4287,13 @@ function renderCapacity(){
     ["In-house fabric in plan", fmtInt(fabHours), fmtInt(planned.length) + " orders, spread " + rangeNote],
     ["Avg fabric load per day", fabDays ? fmtInt(fabHours / fabDays) : "0",
       fabDays ? "kg, over " + fmtInt(fabDays) + " working days" : "no day carries fabric"],
-    ["Peak knitting day", fmtInt(fp.max), fp.at ? fmtDate(fp.at) : ""],
-    ["Sewing hours in plan", fmtInt(sewHours), fmtInt(sewPlanned.length) + " orders, spread " + rangeNote],
+    ["Peak Fabric Delivery Day", fmtInt(fp.max), fp.at ? fmtDate(fp.at) : ""],
+    ["Total Sewing Hours Load", fmtInt(sewHours), fmtInt(sewPlanned.length) + " orders, spread " + rangeNote],
     ["Avg sewing load per day", sewDays ? fmtInt(sewHours / sewDays) : "0",
       sewDays ? "FR hours, over " + fmtInt(sewDays) + " working days" : "no day carries sewing"],
     ["Peak sewing day", fmtInt(sp.max), sp.at ? fmtDate(sp.at) : ""],
     CAPACITY.days
-      ? ["Capacity used", usedPct + "%", fmtInt(capStat.used) + " of " + fmtInt(capStat.avail) + " hours, " + capStat.covered + " days"]
+      ? ["Producible Hour Load on Capacity", usedPct + "%", fmtInt(capStat.used) + " of " + fmtInt(capStat.avail) + " hours, " + capStat.covered + " days"]
       : ["Sewing not planned", fmtInt(sum(filtered, "FR hour") - sewHours),
          fmtInt(filtered.length - sewPlanned.length) + " orders with no window, or outside the range"],
     CAPACITY.days
