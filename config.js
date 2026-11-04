@@ -61,7 +61,7 @@ window.EWO_CONFIG = {
     "Sewing Complete":                          "Adjusted sew end",
     "Gmt Receive From Wash [Start]":            "wash start",
     "Gmt Receive From Wash [Complete]":         "wash end",
-    "Final inspection done":                    "RFI"
+    "Finishing Complete [pack]":                    "RFI"
   },
 
   /* How often, in seconds, an open page checks whether the files changed.
