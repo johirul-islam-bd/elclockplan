@@ -4641,7 +4641,7 @@ function renderCapacity(){
       (sewDays ? "FR hours, over " + fmtInt(sewDays) + " working days" : "no day carries sewing")
       + (sp.at ? " · peak " + fmtInt(sp.max) + " on " + fmtDate(sp.at) : "")],
     CAPACITY.days
-      ? ["Capacity used", usedPct + "%", fmtInt(capStat.used) + " of " + fmtInt(capStat.avail)
+      ? ["Sewing Load on Capacity", usedPct + "%", fmtInt(capStat.used) + " of " + fmtInt(capStat.avail)
           + " hours, " + fmtInt(capStat.covered) + " working days"]
       : ["Sewing not planned", fmtInt(sum(filtered, "FR hour") - sewHours),
          fmtInt(filtered.length - sewPlanned.length) + " orders with no window, or outside the range"],
