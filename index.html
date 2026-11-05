@@ -4636,7 +4636,7 @@ function renderCapacity(){
     ["Fabric delivery Plan per day", fabDays ? fmtInt(fabHours / fabDays) : "0",
       (fabDays ? "kg, over " + fmtInt(fabDays) + " working days" : "no day carries fabric")
       + (fp.at ? " · peak " + fmtInt(fp.max) + " on " + fmtDate(fp.at) : "")],
-    ["Sewing hours in plan", fmtInt(sewHours), fmtInt(sewPlanned.length) + " orders, spread " + rangeNote],
+    ["Total Sewing Load", fmtInt(sewHours), fmtInt(sewPlanned.length) + " orders, spread " + rangeNote],
     ["Sewing load per day", sewDays ? fmtInt(sewHours / sewDays) : "0",
       (sewDays ? "Sewing hours, over " + fmtInt(sewDays) + " working days" : "no day carries sewing")
       + (sp.at ? " · peak " + fmtInt(sp.max) + " on " + fmtDate(sp.at) : "")],
