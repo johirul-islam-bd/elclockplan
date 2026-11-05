@@ -4630,14 +4630,14 @@ function renderCapacity(){
   var usedPct = capStat.avail ? Math.round(1000 * capStat.used / capStat.avail) / 10 : 0;
 
   var tiles = [
-    ["In-house fabric in plan", fmtInt(fabHours), fmtInt(planned.length) + " orders, spread " + rangeNote],
+    ["In-house fabric delivery plan", fmtInt(fabHours), fmtInt(planned.length) + " orders, spread " + rangeNote],
     /* The average and its busiest day are one thought, not two: the peak only
        means anything next to the average it stands out from. */
-    ["Avg fabric load per day", fabDays ? fmtInt(fabHours / fabDays) : "0",
+    ["Fabric delivery Plan per day", fabDays ? fmtInt(fabHours / fabDays) : "0",
       (fabDays ? "kg, over " + fmtInt(fabDays) + " working days" : "no day carries fabric")
       + (fp.at ? " · peak " + fmtInt(fp.max) + " on " + fmtDate(fp.at) : "")],
     ["Sewing hours in plan", fmtInt(sewHours), fmtInt(sewPlanned.length) + " orders, spread " + rangeNote],
-    ["Avg sewing load per day", sewDays ? fmtInt(sewHours / sewDays) : "0",
+    ["Sewing load per day", sewDays ? fmtInt(sewHours / sewDays) : "0",
       (sewDays ? "FR hours, over " + fmtInt(sewDays) + " working days" : "no day carries sewing")
       + (sp.at ? " · peak " + fmtInt(sp.max) + " on " + fmtDate(sp.at) : "")],
     CAPACITY.days
